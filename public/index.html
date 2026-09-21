@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Հայերեն — Армянский</title>
+  <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+Armenian:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=12">
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-title">Հայերեն</div>
+      <div class="header-subtitle">Армянский язык</div>
+    </header>
+
+    <!-- Overall Progress -->
+    <section class="progress-section">
+      <div class="progress-labels">
+        <span class="level-label level-current">A0</span>
+        <span class="progress-percent" id="overallPercent">0%</span>
+        <span class="level-label level-target">A1</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="overallFill" style="width: 0%"></div>
+      </div>
+    </section>
+
+    <!-- Skills Grid -->
+    <section class="skills-section">
+      <div class="skills-grid" id="skillsGrid">
+        <!-- filled by JS -->
+      </div>
+    </section>
+
+    <!-- Action Buttons -->
+    <section class="actions-section">
+      <div class="actions-list" id="actionsList">
+        <!-- filled by JS -->
+      </div>
+    </section>
+
+    <!-- 3D Flip Flashcard Modal -->
+    <div class="modal-overlay" id="wordModal">
+      <div class="modal-container">
+        <button class="modal-close" id="modalClose" aria-label="Закрыть">✕</button>
+
+        <!-- Top bar: counter + mode toggle -->
+        <div class="card-topbar">
+          <div class="card-counter" id="cardCounter">1 / 166</div>
+          <button class="mode-toggle" id="modeToggle" title="Режим карточек">
+            <span class="mode-icon" id="modeIcon">👁️</span>
+          </button>
+        </div>
+
+        <!-- 3D Flip Scene -->
+        <div class="flip-card-scene" id="flipCardScene">
+          <div class="flip-card-inner" id="flipCardInner">
+            
+            <!-- FRONT FACE: Armenian Word (or Hidden in Listening Mode) -->
+            <div class="flip-card-face flip-card-front" id="cardFront">
+              <div class="face-tag" id="frontFaceTag">УРОК 1 · ПОВТОРЕНИЕ</div>
+
+              <!-- Listening mode cover (tappable to reveal) -->
+              <div class="listening-cover" id="listeningCover" style="display: none;">
+                <div class="listening-wave-icon">🎧</div>
+                <div class="listening-cover-title">Слово скрыто</div>
+                <div class="listening-cover-desc">Послушайте произношение</div>
+                <button class="reveal-word-btn" id="revealWordBtn">Нажмите, чтобы открыть</button>
+              </div>
+
+              <!-- Armenian Word (Large Serif) -->
+              <div class="front-word-box" id="frontWordBox">
+                <div class="card-armenian" id="cardArmenian">Բարև</div>
+              </div>
+
+              <!-- Audio button on front -->
+              <button class="audio-btn" id="audioBtnFront">
+                <span class="audio-icon">🔊</span>
+                <span class="audio-label" id="audioLabelFront">Слушать</span>
+              </button>
+
+              <!-- Flip button -->
+              <button class="flip-action-btn" id="flipToBackBtn">
+                <span>Перевернуть (перевод и пример)</span>
+                <span class="flip-icon">🔄</span>
+              </button>
+            </div>
+
+            <!-- BACK FACE: Translation + Phonetic + Example -->
+            <div class="flip-card-face flip-card-back" id="cardBack">
+              <div class="face-tag" id="backFaceTag">УРОК 1 · ПЕРЕВОД И ПРИМЕР</div>
+
+              <!-- Main Translation -->
+              <div class="back-translation-box">
+                <div class="card-translation" id="cardTranslation">Здравствуйте / Привет</div>
+                <div class="card-phonetic" id="cardPhonetic">[barev]</div>
+              </div>
+
+              <!-- Example sentence box -->
+              <div class="example-box" id="exampleBox">
+                <div class="example-tag">ПРИМЕР В ПРЕДЛОЖЕНИИ</div>
+                <div class="example-armenian" id="exampleArmenian">Բարև, ինչպե՞ս ես:</div>
+                <div class="example-translation" id="exampleTranslation">Привет, как твои дела?</div>
+              </div>
+
+              <!-- Audio button on back -->
+              <button class="audio-btn audio-btn-compact" id="audioBtnBack">
+                <span class="audio-icon">🔊</span>
+                <span class="audio-label" id="audioLabelBack">Послушать снова</span>
+              </button>
+
+              <!-- Flip to front button -->
+              <button class="flip-action-btn flip-action-sm" id="flipToFrontBtn">
+                <span>← К армянскому слову 🔄</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SRS Self-assessment (ALWAYS visible for both front and back!) -->
+        <div class="srs-box" id="srsBox">
+          <div class="srs-title">Оцените знание слова:</div>
+          <div class="srs-grid">
+            <button class="srs-btn srs-again" data-quality="0">
+              <span class="srs-emoji">😵</span>
+              <span>Снова</span>
+              <span class="srs-interval">10мин</span>
+            </button>
+            <button class="srs-btn srs-hard" data-quality="1">
+              <span class="srs-emoji">😕</span>
+              <span>Трудно</span>
+              <span class="srs-interval">1д</span>
+            </button>
+            <button class="srs-btn srs-good" data-quality="2">
+              <span class="srs-emoji">🙂</span>
+              <span>Хорошо</span>
+              <span class="srs-interval">3д</span>
+            </button>
+            <button class="srs-btn srs-easy" data-quality="3">
+              <span class="srs-emoji">😎</span>
+              <span>Легко</span>
+              <span class="srs-interval">7д</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Navigation bottom -->
+        <div class="modal-nav">
+          <button class="nav-btn" id="prevCardBtn">← Назад</button>
+          <button class="nav-btn nav-btn-primary" id="nextCardBtn">Далее →</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ==================== LEARN WORDS MODAL (4-STEP WIZARD) ==================== -->
+    <div class="modal-overlay" id="learnModal">
+      <div class="modal-container learn-container">
+        <button class="modal-close" id="learnModalClose" aria-label="Закрыть">✕</button>
+
+        <!-- Screen 1: Lessons List -->
+        <div class="learn-screen" id="lessonsScreen">
+          <div class="learn-screen-header">
+            <div class="learn-title">Раздел «Learn Words»</div>
+            <div class="learn-subtitle">Выберите урок для пошагового изучения новых слов</div>
+          </div>
+          <div class="lessons-list" id="lessonsList">
+            <!-- Filled dynamically by JS -->
+          </div>
+        </div>
+
+        <!-- Screen 2: 4-Step Learning Interactive Flow -->
+        <div class="learn-screen" id="studyScreen" style="display: none;">
+          <!-- Top bar with lesson badge, word counter, and steps progress -->
+          <div class="study-topbar">
+            <button class="back-to-lessons-btn" id="backToLessonsBtn">‹ Уроки</button>
+            <div class="study-counter" id="studyWordCounter">Слово 1 / 41</div>
+          </div>
+
+          <!-- Step Indicators (1: Знакомство, 2: 1 из 4, 3: На слух, 4: Буквы) -->
+          <div class="step-indicator-bar">
+            <div class="step-pill" id="pillStep1">1. Знакомство</div>
+            <div class="step-pill" id="pillStep2">2. Выбор</div>
+            <div class="step-pill" id="pillStep3">3. На слух</div>
+            <div class="step-pill" id="pillStep4">4. Буквы</div>
+          </div>
+
+          <!-- STEP 1: Eyes & Ears (Знакомство) -->
+          <div class="step-content" id="step1Content">
+            <div class="study-card">
+              <div class="study-armenian" id="step1Armenian">Հարց</div>
+              <div class="study-phonetic" id="step1Phonetic">[harts]</div>
+              <div class="study-translation" id="step1Translation">Вопрос</div>
+              
+              <button class="audio-btn" id="step1AudioBtn">
+                <span class="audio-icon">🔊</span>
+                <span id="step1AudioLabel">Послушать произношение</span>
+              </button>
+
+              <div class="example-box" id="step1ExampleBox">
+                <div class="example-tag">ПРИМЕР</div>
+                <div class="example-armenian" id="step1ExampleArmenian">Ես մի հարց ունեմ:</div>
+                <div class="example-translation" id="step1ExampleTranslation">У меня есть один вопрос.</div>
+              </div>
+            </div>
+            <button class="study-action-btn" id="step1NextBtn">Далее: Проверить себя →</button>
+          </div>
+
+          <!-- STEP 2: Multiple Choice 1 of 4 (Пассивное узнавание) -->
+          <div class="step-content" id="step2Content" style="display: none;">
+            <div class="step-prompt">Выберите правильный перевод:</div>
+            <div class="quiz-armenian-wrap">
+              <div class="quiz-armenian" id="step2Armenian">Հարց</div>
+              <button class="audio-btn-icon" id="step2AudioBtn">🔊</button>
+            </div>
+            <div class="quiz-options-grid" id="step2OptionsGrid">
+              <!-- 4 options filled by JS -->
+            </div>
+          </div>
+
+          <!-- STEP 3: Listening Test (Активный тест на слух) -->
+          <div class="step-content" id="step3Content" style="display: none;">
+            <div class="step-prompt">Послушайте и выберите перевод:</div>
+            <div class="listening-quiz-box">
+              <div class="listen-bubble" id="step3AudioBtn">
+                <span class="listen-bubble-icon">🎧</span>
+                <span class="listen-bubble-text">Нажмите, чтобы послушать</span>
+              </div>
+            </div>
+            <div class="quiz-options-grid" id="step3OptionsGrid">
+              <!-- 4 options filled by JS -->
+            </div>
+          </div>
+
+          <!-- STEP 4: Letter Builder (Буквособиралка) -->
+          <div class="step-content" id="step4Content" style="display: none;">
+            <div class="step-prompt">Соберите слово из армянских букв:</div>
+            
+            <div class="builder-hint">
+              <span class="builder-translation" id="step4Translation">Вопрос</span>
+              <!-- Hidden until word is solved -->
+              <span class="builder-phonetic" id="step4Phonetic" style="display: none;"></span>
+              <button class="audio-btn-icon" id="step4AudioBtn" style="display: none;" title="Послушать">🔊</button>
+            </div>
+
+            <!-- Assembled Letters Slots -->
+            <div class="letter-slots-container" id="letterSlotsContainer">
+              <!-- Slots filled by JS -->
+            </div>
+
+            <!-- Scrambled Letter Tiles -->
+            <div class="letter-tiles-container" id="letterTilesContainer">
+              <!-- Clickable tiles filled by JS -->
+            </div>
+
+            <!-- Hints & Controls -->
+            <div class="builder-controls-row">
+              <div class="builder-hint-actions">
+                <button class="builder-tool-btn hint-tool" id="hintAudioBtn" title="Послушать подсказку">🔊 Звук</button>
+                <button class="builder-tool-btn hint-tool" id="hintLetterBtn" title="Подставить букву">💡 Буква</button>
+              </div>
+              <div class="builder-edit-actions">
+                <button class="builder-tool-btn" id="builderBackspaceBtn" title="Стереть последнюю букву">⌫</button>
+                <button class="builder-tool-btn" id="builderResetBtn" title="Начать заново">Сброс</button>
+              </div>
+            </div>
+
+            <div class="builder-repeat-notice" id="builderRepeatNotice" style="display: none;">
+              ⚠️ Использована подсказка — слово повторится в конце пятёрки
+            </div>
+
+            <!-- Word Completion / Success Banner -->
+            <div class="builder-success-banner" id="builderSuccessBanner" style="display: none;">
+              <div class="success-icon" id="builderBannerIcon">🎉</div>
+              <div class="success-title" id="builderBannerTitle">Отлично!</div>
+              <div class="success-desc" id="builderBannerDesc">Слово выучено и добавлено в интервальное повторение</div>
+              <button class="study-action-btn" id="step4NextWordBtn">Далее →</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Screen 2.5: Batch (5 words) Finished -->
+        <div class="learn-screen" id="batchFinishedScreen" style="display: none;">
+          <div class="celebration-box">
+            <div class="celebration-emoji">⭐</div>
+            <div class="celebration-title" id="batchFinishedTitle">Пятёрка слов выучена!</div>
+            <div class="celebration-desc" id="batchFinishedDesc">Вы успешно освоили 5 слов.</div>
+            <div class="batch-stats-badge" id="batchStatsBadge">Прогресс урока: 5 / 41</div>
+            <button class="study-action-btn" id="nextBatchBtn" style="margin-top: 14px; margin-bottom: 8px;">Следующие 5 слов →</button>
+            <button class="nav-btn" id="batchBackToLessonsBtn">К списку уроков</button>
+          </div>
+        </div>
+
+        <!-- Screen 3: Lesson Finished Celebration -->
+        <div class="learn-screen" id="lessonFinishedScreen" style="display: none;">
+          <div class="celebration-box">
+            <div class="celebration-emoji">🏆</div>
+            <div class="celebration-title">Поздравляем!</div>
+            <div class="celebration-desc" id="celebrationDesc">Все слова урока пройдены и добавлены в интервальное повторение.</div>
+            <button class="study-action-btn" id="finishLessonBtn">Вернуться к урокам</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== FLOATING BUG / FEEDBACK BUTTON ==================== -->
+  <button class="bug-float-btn" id="bugFloatBtn" title="Сообщить о баге или предложении">
+    <span class="bug-icon">🐞</span>
+    <span class="bug-text">Баг?</span>
+  </button>
+
+  <!-- ==================== PATTERN DRILLS MODAL ==================== -->
+  <div class="modal-overlay" id="drillsModal">
+    <div class="modal-container drills-modal-container">
+      <button class="modal-close" id="drillsModalClose" aria-label="Закрыть">✕</button>
+
+      <!-- View 1: Sections / Level Picker -->
+      <div class="drills-view" id="drillsSectionsView">
+        <div class="drills-top-header">
+          <div class="drills-header-title">
+            <span class="drills-bolt">⚡</span>
+            <span>Pattern Drills</span>
+          </div>
+          <div class="drills-header-sub">Быстрые языковые шаблоны</div>
+        </div>
+
+        <!-- Banner to open Grammar Guide -->
+        <button class="drills-grammar-banner-btn" id="openGrammarFromDrillsBtn" type="button">
+          <div class="drills-grammar-banner-left">
+            <span class="drills-grammar-banner-icon">📚</span>
+            <div class="drills-grammar-banner-text">
+              <div class="drills-grammar-banner-title">Справочник грамматики</div>
+              <div class="drills-grammar-banner-sub">Правила, формулы и примеры к урокам 2–5</div>
+            </div>
+          </div>
+          <span class="drills-grammar-banner-arrow">›</span>
+        </button>
+
+        <div class="drills-sections-list" id="drillsSectionsList">
+          <!-- Filled dynamically -->
+        </div>
+      </div>
+
+      <!-- View 2: Active Drill Session (Matching Screenshots Exactly) -->
+      <div class="drills-view" id="drillsSessionView" style="display: none;">
+        <!-- Top bar: Title badge + Timer speed pills + Combo badge -->
+        <div class="drills-session-header">
+          <div class="drills-topbar-main">
+            <div class="drills-topbar-left">
+              <button class="drills-back-btn" id="drillsBackBtn" title="Назад к разделам">‹</button>
+              <div class="drills-brand">
+                <span class="drills-bolt">⚡</span>
+                <span class="drills-title-text">Дриллы</span>
+                <span class="drills-card-pill" id="drillHeaderPill">1 / 30</span>
+              </div>
+            </div>
+            <div class="drills-combo-badge" id="drillComboBadge">
+              <span class="combo-icon">🔥</span>
+              <span id="drillComboText">0</span>
+            </div>
+          </div>
+          <div class="drills-timer-row">
+            <div class="drills-timer-pills" id="drillsTimerPills">
+              <button class="drill-timer-pill" data-seconds="3">3с</button>
+              <button class="drill-timer-pill" data-seconds="5">5с</button>
+              <button class="drill-timer-pill active" data-seconds="7">7с</button>
+              <button class="drill-timer-pill" data-seconds="10">10с</button>
+              <button class="drill-timer-pill" data-seconds="0">∞</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- The Main Drill Card Box -->
+        <div class="drill-card-box">
+          <!-- Card Header: Counter + Question Tag + Quick Rule Button -->
+          <div class="drill-card-top">
+            <div class="drill-card-counter" id="drillCardCounter">КАРТОЧКА 1 ИЗ 30</div>
+            <div class="drill-card-top-right">
+              <button class="drill-rule-btn" id="drillCardRuleBtn" title="Посмотреть правило грамматики" type="button">📖 Правило</button>
+              <div class="drill-question-tag" id="drillQuestionTag">? MAKE IT PLURAL</div>
+            </div>
+          </div>
+
+          <!-- Prompt Sentence with Audio Button -->
+          <div class="drill-prompt-row">
+            <div class="drill-prompt-text" id="drillPromptText">...</div>
+            <button class="drill-audio-btn" id="drillPromptAudioBtn" title="Послушать фразу">
+              <span>🔊</span>
+            </button>
+          </div>
+          <div class="drill-prompt-trans" id="drillPromptTrans">...</div>
+
+          <!-- Animated Countdown Timer Bar -->
+          <div class="drill-timer-track">
+            <div class="drill-timer-bar" id="drillTimerBar"></div>
+          </div>
+
+          <!-- Speech Input Button & Live Transcript -->
+          <div class="drill-mic-wrap">
+            <button class="drill-mic-btn" id="drillMicBtn">
+              <span class="mic-icon" id="drillMicIcon">🎙️</span>
+              <span id="drillMicLabel">Ответить голосом</span>
+            </button>
+            <div class="drill-recognized-box" id="drillRecognizedBox" style="display: none;">
+              Распознано: <strong id="drillRecognizedText">"..."</strong>
+            </div>
+          </div>
+
+          <!-- Options Grid (A, B, C) -->
+          <div class="drill-options-grid" id="drillOptionsGrid">
+            <!-- Filled dynamically -->
+          </div>
+
+          <!-- Grammar Rule Explanation Banner on Error -->
+          <div class="drill-rule-explanation-banner" id="drillRuleExplanationBanner" style="display: none;">
+            <div class="drill-rule-exp-header">
+              <div class="drill-rule-exp-tag">
+                <span class="drill-rule-exp-bulb">💡</span>
+                <span class="drill-rule-exp-title" id="drillRuleExpTitle">Правило</span>
+              </div>
+              <button class="drill-rule-exp-more-btn" id="drillRuleExpMoreBtn" type="button">Справочник ›</button>
+            </div>
+            <div class="drill-rule-exp-body" id="drillRuleExpBody">...</div>
+            <div class="drill-rule-exp-formula" id="drillRuleExpFormula" style="display: none;">...</div>
+          </div>
+        </div>
+
+        <!-- Bottom Controls -->
+        <div class="drill-bottom-bar">
+          <div class="drill-requeue-hint" id="drillRequeueHint" style="display: none;">
+            🔁 Повторится через 2 хода
+          </div>
+          <button class="drill-next-btn" id="drillNextBtn">
+            <span>Далее</span>
+            <span>⏭</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- View 3: Section Completed View -->
+      <div class="drills-view" id="drillsFinishedView" style="display: none;">
+        <div class="drills-finished-box">
+          <div class="drills-finished-icon">🎉</div>
+          <div class="drills-finished-title">Сессия дриллов завершена!</div>
+          <div class="drills-finished-desc" id="drillsFinishedDesc">
+            Все активные карточки раздела пройдены.
+          </div>
+          <div class="drills-finished-stats">
+            <div class="drill-finish-stat">
+              <div class="stat-num" id="finishTotalAnswered">30</div>
+              <div class="stat-lbl">Карточек пройдено</div>
+            </div>
+            <div class="drill-finish-stat">
+              <div class="stat-num" id="finishMaxCombo">🔥 5</div>
+              <div class="stat-lbl">Макс. комбо</div>
+            </div>
+            <div class="drill-finish-stat">
+              <div class="stat-num" id="finishMasteredCount">0</div>
+              <div class="stat-lbl">Закреплено (3/3)</div>
+            </div>
+          </div>
+          <button class="study-action-btn" id="drillFinishBackBtn" style="margin-top: 20px;">
+            Вернуться к разделам
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== GRAMMAR RULES MODAL ==================== -->
+  <div class="modal-overlay" id="grammarModal">
+    <div class="modal-container grammar-modal-container">
+      <button class="modal-close" id="grammarModalClose" aria-label="Закрыть">✕</button>
+
+      <div class="grammar-top-header">
+        <div class="grammar-header-title">
+          <span class="grammar-header-icon">📚</span>
+          <span>Грамматика</span>
+        </div>
+        <div class="grammar-header-sub">Правила и шаблоны, которые тренируются в дриллах</div>
+      </div>
+
+      <!-- Lesson Filter Tabs -->
+      <div class="grammar-tabs" id="grammarTabs">
+        <button class="grammar-tab active" data-lesson="all">Все уроки</button>
+        <button class="grammar-tab" data-lesson="lesson_2_3">Урок 2–3</button>
+        <button class="grammar-tab" data-lesson="lesson_4">Урок 4</button>
+        <button class="grammar-tab" data-lesson="lesson_5">Урок 5: Падежи</button>
+      </div>
+
+      <!-- Single Scrollable Body (Inspector + Rules scroll together) -->
+      <div class="grammar-scroll-body" id="grammarScrollBody">
+        <!-- Interactive Case Inspector (Lesson 5) -->
+        <div class="grammar-case-inspector" id="grammarCaseInspector" style="display: none;">
+          <!-- Filled dynamically by JS -->
+        </div>
+
+        <!-- Scrollable list of rules -->
+        <div class="grammar-list" id="grammarRulesList">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== VOCAB SKILL LEVELS MODAL ==================== -->
+  <div class="modal-overlay" id="vocabModal">
+    <div class="modal-container vocab-modal-container">
+      <button class="modal-close" id="vocabModalClose" aria-label="Закрыть">✕</button>
+      
+      <div class="vocab-modal-header">
+        <div class="vocab-modal-icon">📚</div>
+        <div>
+          <div class="vocab-modal-title">Навык Vocab · Уровни 1–30</div>
+          <div class="vocab-modal-subtitle">495 слов распределены по 30 уровням</div>
+        </div>
+      </div>
+
+      <!-- Info Banner explaining the 21-day rule -->
+      <div class="vocab-rule-banner">
+        <span class="vocab-rule-icon">🧠</span>
+        <div class="vocab-rule-text">
+          <strong>Правило зачёта:</strong> слово засчитывается в прогресс уровня, когда интервал повторения в SRS достигает <strong>21 день и более</strong> (переход в долговременную память).
+        </div>
+      </div>
+
+      <!-- Overall Vocab Stats Card -->
+      <div class="vocab-overall-card">
+        <div class="vocab-stat-box">
+          <div class="vocab-stat-label">Текущий уровень</div>
+          <div class="vocab-stat-value highlight" id="vocabCurrentLevelText">Lv. 1 / 30</div>
+        </div>
+        <div class="vocab-stat-box">
+          <div class="vocab-stat-label">Засчитано слов (≥21 дн.)</div>
+          <div class="vocab-stat-value" id="vocabMasteredCountText">0 / 495</div>
+        </div>
+      </div>
+
+      <!-- List of 30 levels -->
+      <div class="vocab-levels-list" id="vocabLevelsList">
+        <!-- Filled dynamically by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== FEEDBACK / BUG REPORT MODAL ==================== -->
+  <div class="modal-overlay" id="feedbackModal">
+    <div class="modal-container feedback-container">
+      <button class="modal-close" id="feedbackModalClose" aria-label="Закрыть">✕</button>
+      
+      <div class="feedback-header">
+        <div class="feedback-title">Сообщить о проблеме</div>
+        <div class="feedback-subtitle">Скриншот экрана сделан автоматически</div>
+      </div>
+
+      <!-- Type tabs: Bug vs Suggestion -->
+      <div class="feedback-type-tabs">
+        <button class="feedback-type-btn active" data-type="bug" id="feedbackTypeBug">
+          <span>🐛</span>
+          <span>Баг / Ошибка</span>
+        </button>
+        <button class="feedback-type-btn" data-type="suggestion" id="feedbackTypeSuggestion">
+          <span>💡</span>
+          <span>Предложение</span>
+        </button>
+      </div>
+
+      <!-- Screenshot preview -->
+      <div class="feedback-screenshot-box" id="feedbackScreenshotBox">
+        <img id="feedbackScreenshotImg" alt="Скриншот экрана" />
+        <div class="screenshot-badge">📸 Скриншот экрана</div>
+      </div>
+
+      <!-- Comment textarea -->
+      <div class="feedback-field">
+        <label for="feedbackComment" class="feedback-label">Описание проблемы или предложения:</label>
+        <textarea id="feedbackComment" class="feedback-textarea" rows="3" placeholder="Что пошло не так или что хотелось бы улучшить..."></textarea>
+      </div>
+
+      <!-- Diagnostics collapsible -->
+      <details class="feedback-diagnostics-details">
+        <summary class="diagnostics-summary">⚙️ Диагностические данные (автоматически)</summary>
+        <pre class="diagnostics-pre" id="diagnosticsPre"></pre>
+      </details>
+
+      <div class="feedback-actions">
+        <button class="nav-btn" id="feedbackCancelBtn">Отмена</button>
+        <button class="study-action-btn" id="feedbackSubmitBtn">Отправить отчет</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="html2canvas.min.js"></script>
+  <script src="app.js?v=18"></script>
+</body>
+</html>
+
