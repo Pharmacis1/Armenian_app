@@ -324,7 +324,7 @@ async function getLessonsSummary() {
   return [];
 }
 
-// SM-2 Spaced Repetition Algorithm (Anki standard)
+// SM-2 Spaced Repetition Algorithm (Optimized Language Ladder: 1d -> 3d -> 7d -> 18d -> 45d)
 // quality: 0 = Again (Снова), 1 = Hard (Трудно), 2 = Good (Хорошо), 3 = Easy (Легко)
 function calculateNextSRS(word, quality) {
   let repetitions = parseInt(word.repetitions || 0, 10);
@@ -335,47 +335,48 @@ function calculateNextSRS(word, quality) {
   const nextReview = new Date();
 
   if (quality === 0) {
-    // Again: lapse / failed recall
+    // Again: lapse / failed recall -> reset to 0, repeat in 10 minutes
     repetitions = 0;
     newIntervalDays = 0;
-    // Ease factor decreases by 0.20 (minimum 1.3)
     ease_factor = Math.max(1.3, ease_factor - 0.20);
-    // Scheduled for 10 minutes later
     nextReview.setMinutes(nextReview.getMinutes() + 10);
   } else if (quality === 1) {
-    // Hard: successful recall with significant difficulty
+    // Hard: successful recall with effort -> tight review
     repetitions += 1;
     if (interval_days <= 1) {
       newIntervalDays = 1;
+    } else if (interval_days <= 3) {
+      newIntervalDays = 2;
     } else {
       newIntervalDays = Math.max(interval_days + 1, Math.round(interval_days * 1.2));
     }
-    // Ease factor decreases by 0.15 (minimum 1.3)
     ease_factor = Math.max(1.3, ease_factor - 0.15);
     nextReview.setDate(nextReview.getDate() + newIntervalDays);
   } else if (quality === 2) {
-    // Good: normal successful recall
+    // Good: normal recall -> language ladder: 1d -> 3d -> 7d -> 18d -> ...
     repetitions += 1;
-    if (repetitions === 1) {
+    if (repetitions <= 1) {
       newIntervalDays = 1;
     } else if (repetitions === 2) {
-      newIntervalDays = 6;
+      newIntervalDays = 3;
+    } else if (repetitions === 3) {
+      newIntervalDays = 7;
     } else {
       newIntervalDays = Math.max(interval_days + 1, Math.round(interval_days * ease_factor));
     }
-    // Ease factor unchanged
     nextReview.setDate(nextReview.getDate() + newIntervalDays);
   } else if (quality === 3) {
-    // Easy: effortless recall
+    // Easy: effortless recall -> safe language jump: 3d -> 6d -> 14d -> ...
     repetitions += 1;
-    if (repetitions === 1) {
-      newIntervalDays = 4;
+    if (repetitions <= 1) {
+      newIntervalDays = 3;
     } else if (repetitions === 2) {
-      newIntervalDays = Math.round(6 * ease_factor * 1.3);
+      newIntervalDays = 6;
+    } else if (repetitions === 3) {
+      newIntervalDays = 14;
     } else {
-      newIntervalDays = Math.max(interval_days + 2, Math.round(interval_days * ease_factor * 1.3));
+      newIntervalDays = Math.max(interval_days + 2, Math.round(interval_days * ease_factor * 1.25));
     }
-    // Ease factor increases by 0.15 (maximum 3.0)
     ease_factor = Math.min(3.0, ease_factor + 0.15);
     nextReview.setDate(nextReview.getDate() + newIntervalDays);
   }

@@ -347,7 +347,7 @@ function renderModalCard() {
 }
 
 function getSRSPreviewIntervals(word) {
-  if (!word) return { again: '<10м', hard: '1д', good: '6д', easy: '20д' };
+  if (!word) return { again: '<10м', hard: '1д', good: '3д', easy: '6д' };
 
   const reps = parseInt(word.repetitions || 0, 10);
   const interval = parseInt(word.interval_days || 0, 10);
@@ -364,30 +364,40 @@ function getSRSPreviewIntervals(word) {
   // 0: Again — lapse
   const again = '<10м';
 
-  // 1: Hard — modest advance (x1.2)
+  // 1: Hard — tighter reinforcement
   let hardDays = 1;
   if (interval <= 1) {
     hardDays = 1;
+  } else if (interval <= 3) {
+    hardDays = 2;
   } else {
     hardDays = Math.max(interval + 1, Math.round(interval * 1.2));
   }
   const hard = fmtDays(hardDays);
 
-  // 2: Good — standard SM-2 expansion (x EF)
+  // 2: Good — gentle language ladder: 1 -> 3 -> 7 -> 18 -> ...
   let goodDays = 1;
-  if (reps <= 1) {
-    goodDays = 6;
+  if (reps <= 0) {
+    goodDays = 1;
+  } else if (reps === 1) {
+    goodDays = 3;
+  } else if (reps === 2) {
+    goodDays = 7;
   } else {
     goodDays = Math.max(interval + 1, Math.round(interval * ef));
   }
   const good = fmtDays(goodDays);
 
-  // 3: Easy — bonus expansion (x EF * 1.3)
-  let easyDays = 4;
-  if (reps <= 1) {
-    easyDays = Math.round(6 * ef * 1.3);
+  // 3: Easy — safe language bonus: 3 -> 6 -> 14 -> ...
+  let easyDays = 3;
+  if (reps <= 0) {
+    easyDays = 3;
+  } else if (reps === 1) {
+    easyDays = 6;
+  } else if (reps === 2) {
+    easyDays = 14;
   } else {
-    easyDays = Math.max(interval + 2, Math.round(interval * ef * 1.3));
+    easyDays = Math.max(interval + 2, Math.round(interval * ef * 1.25));
   }
   const easy = fmtDays(easyDays);
 
