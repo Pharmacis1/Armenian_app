@@ -375,26 +375,22 @@ function getSRSPreviewIntervals(word) {
   }
   const hard = fmtDays(hardDays);
 
-  // 2: Good — gentle language ladder: 1 -> 3 -> 7 -> 18 -> ...
-  let goodDays = 1;
-  if (reps <= 0) {
-    goodDays = 1;
-  } else if (reps === 1) {
+  // 2: Good — language ladder: 3d -> 7d -> 18d -> 45d
+  let goodDays = 3;
+  if (interval < 3) {
     goodDays = 3;
-  } else if (reps === 2) {
+  } else if (interval < 7) {
     goodDays = 7;
   } else {
     goodDays = Math.max(interval + 1, Math.round(interval * ef));
   }
   const good = fmtDays(goodDays);
 
-  // 3: Easy — safe language bonus: 3 -> 6 -> 14 -> ...
-  let easyDays = 3;
-  if (reps <= 0) {
-    easyDays = 3;
-  } else if (reps === 1) {
+  // 3: Easy — safe language jump: 6d -> 14d -> 22d -> 56d
+  let easyDays = 6;
+  if (interval < 3) {
     easyDays = 6;
-  } else if (reps === 2) {
+  } else if (interval < 7) {
     easyDays = 14;
   } else {
     easyDays = Math.max(interval + 2, Math.round(interval * ef * 1.25));

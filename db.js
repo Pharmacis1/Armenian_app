@@ -353,26 +353,22 @@ function calculateNextSRS(word, quality) {
     ease_factor = Math.max(1.3, ease_factor - 0.15);
     nextReview.setDate(nextReview.getDate() + newIntervalDays);
   } else if (quality === 2) {
-    // Good: normal recall -> language ladder: 1d -> 3d -> 7d -> 18d -> ...
+    // Good: normal recall -> language ladder: 3d -> 7d -> 18d -> 45d
     repetitions += 1;
-    if (repetitions <= 1) {
-      newIntervalDays = 1;
-    } else if (repetitions === 2) {
+    if (interval_days < 3) {
       newIntervalDays = 3;
-    } else if (repetitions === 3) {
+    } else if (interval_days < 7) {
       newIntervalDays = 7;
     } else {
       newIntervalDays = Math.max(interval_days + 1, Math.round(interval_days * ease_factor));
     }
     nextReview.setDate(nextReview.getDate() + newIntervalDays);
   } else if (quality === 3) {
-    // Easy: effortless recall -> safe language jump: 3d -> 6d -> 14d -> ...
+    // Easy: effortless recall -> safe language jump: 6d -> 14d -> 22d -> 56d
     repetitions += 1;
-    if (repetitions <= 1) {
-      newIntervalDays = 3;
-    } else if (repetitions === 2) {
+    if (interval_days < 3) {
       newIntervalDays = 6;
-    } else if (repetitions === 3) {
+    } else if (interval_days < 7) {
       newIntervalDays = 14;
     } else {
       newIntervalDays = Math.max(interval_days + 2, Math.round(interval_days * ease_factor * 1.25));
