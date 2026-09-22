@@ -561,56 +561,71 @@
     <div class="modal-container reading-modal-container">
       <button class="modal-close" id="readingModalClose" aria-label="Закрыть">✕</button>
       
-      <!-- Top Control Bar (matching reference screenshots) -->
+      <!-- Top Control Bar (compact sticky header) -->
       <div class="reading-top-toolbar">
-        <!-- Visual Modes Switcher -->
-        <div class="reading-mode-pills" id="readingModePills">
-          <button class="reading-mode-pill active" data-mode="l1">L1: Яркий</button>
-          <button class="reading-mode-pill" data-mode="l2">L2: Мягкий</button>
-          <button class="reading-mode-pill" data-mode="l3">L3: Блоки</button>
-          <button class="reading-mode-pill" data-mode="l4">L4: Текст</button>
+        <div class="reading-toolbar-top-row">
+          <!-- Visual Modes Switcher -->
+          <div class="reading-mode-pills" id="readingModePills">
+            <button class="reading-mode-pill active" data-mode="l1">L1: Яркий</button>
+            <button class="reading-mode-pill" data-mode="l2">L2: Мягкий</button>
+            <button class="reading-mode-pill" data-mode="l3">L3: Блоки</button>
+            <button class="reading-mode-pill" data-mode="l4">L4: Текст</button>
+          </div>
         </div>
 
-        <!-- Rhythm Trainer & Speed Controls -->
-        <div class="reading-trainer-controls">
-          <button class="rhythm-trainer-btn" id="rhythmTrainerBtn">
-            <span class="rhythm-btn-icon" id="rhythmBtnIcon">▶</span>
-            <span class="rhythm-btn-text" id="rhythmBtnText">Ритм-тренер</span>
-          </button>
-          <div class="reading-speed-select-wrap">
-            <select class="reading-speed-select" id="readingSpeedSelect">
-              <option value="60">60 WPM</option>
-              <option value="80">80 WPM</option>
-              <option value="100" selected>100 WPM</option>
-              <option value="120">120 WPM</option>
-              <option value="150">150 WPM</option>
+        <div class="reading-toolbar-actions-row">
+          <!-- Rhythm Trainer & Speed Controls -->
+          <div class="reading-trainer-controls">
+            <button class="rhythm-trainer-btn" id="rhythmTrainerBtn">
+              <span class="rhythm-btn-icon" id="rhythmBtnIcon">▶</span>
+              <span class="rhythm-btn-text" id="rhythmBtnText">Ритм-тренер</span>
+            </button>
+            <div class="reading-speed-select-wrap">
+              <select class="reading-speed-select" id="readingSpeedSelect">
+                <option value="60">60 WPM</option>
+                <option value="80">80 WPM</option>
+                <option value="100" selected>100 WPM</option>
+                <option value="120">120 WPM</option>
+                <option value="150">150 WPM</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Quick Chapter Select in Sticky Header -->
+          <div class="reading-quick-story-wrap">
+            <select class="reading-quick-story-select" id="readingQuickStorySelect" aria-label="Выбрать рассказ">
+              <option value="anna_morning">#1 Աննա (75 сл.)</option>
+              <option value="leo_lost_box">#2 Լեո (371 сл.)</option>
             </select>
           </div>
         </div>
       </div>
 
-      <!-- Story Info Header & Selector -->
-      <div class="reading-story-header">
-        <div class="reading-story-top-row">
-          <div class="reading-story-badge" id="readingStoryBadge">Уровень A1 · Бытовой рассказ</div>
-          <div class="reading-story-selector-pills" id="readingStorySelectorPills">
-            <button class="reading-story-pill active" data-story-id="anna_morning">
-              <span class="story-pill-num">1</span>
-              <span>Աննայի առավոտը (75 сл.)</span>
-            </button>
-            <button class="reading-story-pill" data-story-id="leo_lost_box">
-              <span class="story-pill-num">2</span>
-              <span>Խուզարկու Լեոն (371 сл.)</span>
-            </button>
+      <!-- Scrollable Reading Body (Story Title + Badges + Paragraphs) -->
+      <div class="reading-scroll-body" id="readingScrollBody">
+        <!-- Story Info Header & Selector -->
+        <div class="reading-story-header">
+          <div class="reading-story-top-row">
+            <div class="reading-story-badge" id="readingStoryBadge">Уровень A1 · Бытовой рассказ</div>
+            <div class="reading-story-selector-pills" id="readingStorySelectorPills">
+              <button class="reading-story-pill active" data-story-id="anna_morning">
+                <span class="story-pill-num">1</span>
+                <span>Աննայի առավոտը (75 сл.)</span>
+              </button>
+              <button class="reading-story-pill" data-story-id="leo_lost_box">
+                <span class="story-pill-num">2</span>
+                <span>Խուզարկու Լեոն (371 сл.)</span>
+              </button>
+            </div>
           </div>
+          <h2 class="reading-story-title" id="readingStoryTitle">Աննայի առավոտը</h2>
+          <div class="reading-story-subtitle" id="readingStorySubtitle">Утро Анны</div>
         </div>
-        <h2 class="reading-story-title" id="readingStoryTitle">Աննայի առավոտը</h2>
-        <div class="reading-story-subtitle" id="readingStorySubtitle">Утро Анны</div>
-      </div>
 
-      <!-- Scrollable Paragraphs List -->
-      <div class="reading-cards-list" id="readingCardsList">
-        <!-- Generated dynamically via JS -->
+        <!-- Scrollable Paragraphs List -->
+        <div class="reading-cards-list" id="readingCardsList">
+          <!-- Generated dynamically via JS -->
+        </div>
       </div>
     </div>
 

@@ -3849,6 +3849,14 @@ function switchStory(storyId) {
     p.classList.toggle('active', p.dataset.storyId === storyId);
   });
 
+  // Sync quick story dropdown in sticky header
+  const quickSelect = document.getElementById('readingQuickStorySelect');
+  if (quickSelect) quickSelect.value = storyId;
+
+  // Scroll reading body to top
+  const scrollBody = document.getElementById('readingScrollBody');
+  if (scrollBody) scrollBody.scrollTop = 0;
+
   renderReadingCards();
 }
 
@@ -4364,6 +4372,14 @@ function initReadingModalEvents() {
       switchStory(pill.dataset.storyId);
     });
   });
+
+  // Quick Story Dropdown in Sticky Header
+  const quickStorySelect = document.getElementById('readingQuickStorySelect');
+  if (quickStorySelect) {
+    quickStorySelect.addEventListener('change', (e) => {
+      switchStory(e.target.value);
+    });
+  }
 
   // Rhythm Trainer button
   const rhythmBtn = document.getElementById('rhythmTrainerBtn');
