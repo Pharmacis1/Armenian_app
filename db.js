@@ -324,8 +324,81 @@ async function getLessonsSummary() {
   return [];
 }
 
-// SM-2 Spaced Repetition Algorithm
-// quality: 0 = Again, 1 = Hard, 2 = Good, 3 = Easy
+// SM-2 Spaced Repetition Algorithm (Anki standard)
+// quality: 0 = Again (Снова), 1 = Hard (Трудно), 2 = Good (Хорошо), 3 = Easy (Легко)
+function calculateNextSRS(word, quality) {
+  let repetitions = parseInt(word.repetitions || 0, 10);
+  let interval_days = parseInt(word.interval_days || 0, 10);
+  let ease_factor = parseFloat(word.ease_factor || 2.5);
+
+  let newIntervalDays = 0;
+  const nextReview = new Date();
+
+  if (quality === 0) {
+    // Again: lapse / failed recall
+    repetitions = 0;
+    newIntervalDays = 0;
+    // Ease factor decreases by 0.20 (minimum 1.3)
+    ease_factor = Math.max(1.3, ease_factor - 0.20);
+    // Scheduled for 10 minutes later
+    nextReview.setMinutes(nextReview.getMinutes() + 10);
+  } else if (quality === 1) {
+    // Hard: successful recall with significant difficulty
+    repetitions += 1;
+    if (interval_days <= 1) {
+      newIntervalDays = 1;
+    } else {
+      newIntervalDays = Math.max(interval_days + 1, Math.round(interval_days * 1.2));
+    }
+    // Ease factor decreases by 0.15 (minimum 1.3)
+    ease_factor = Math.max(1.3, ease_factor - 0.15);
+    nextReview.setDate(nextReview.getDate() + newIntervalDays);
+  } else if (quality === 2) {
+    // Good: normal successful recall
+    repetitions += 1;
+    if (repetitions === 1) {
+      newIntervalDays = 1;
+    } else if (repetitions === 2) {
+      newIntervalDays = 6;
+    } else {
+      newIntervalDays = Math.max(interval_days + 1, Math.round(interval_days * ease_factor));
+    }
+    // Ease factor unchanged
+    nextReview.setDate(nextReview.getDate() + newIntervalDays);
+  } else if (quality === 3) {
+    // Easy: effortless recall
+    repetitions += 1;
+    if (repetitions === 1) {
+      newIntervalDays = 4;
+    } else if (repetitions === 2) {
+      newIntervalDays = Math.round(6 * ease_factor * 1.3);
+    } else {
+      newIntervalDays = Math.max(interval_days + 2, Math.round(interval_days * ease_factor * 1.3));
+    }
+    // Ease factor increases by 0.15 (maximum 3.0)
+    ease_factor = Math.min(3.0, ease_factor + 0.15);
+    nextReview.setDate(nextReview.getDate() + newIntervalDays);
+  }
+
+  return {
+    repetitions,
+    interval_days: newIntervalDays,
+    ease_factor: parseFloat(ease_factor.toFixed(2)),
+    next_review: nextReview
+  };
+}
+
+// Get earliest next review time among learned words
+async function getNextReviewTime() {
+  if (isConnected) {
+    const res = await pool.query(
+      'SELECT next_review FROM vocabulary WHERE is_learned = true AND next_review > NOW() ORDER BY next_review ASC LIMIT 1'
+    );
+    return res.rows[0]?.next_review || null;
+  }
+  return null;
+}
+
 async function reviewWord(wordId, quality) {
   if (!isConnected) return null;
 
@@ -333,41 +406,13 @@ async function reviewWord(wordId, quality) {
   if (wordRes.rowCount === 0) return null;
 
   const word = wordRes.rows[0];
-  let { repetitions, interval_days, ease_factor } = word;
-
-  if (quality < 2) {
-    // Failed — reset
-    repetitions = 0;
-    interval_days = quality === 0 ? 0 : 1; // Again = same session, Hard = 1 day
-  } else {
-    // Correct
-    repetitions += 1;
-    if (repetitions === 1) {
-      interval_days = 1;
-    } else if (repetitions === 2) {
-      interval_days = 3;
-    } else {
-      interval_days = Math.round(interval_days * ease_factor);
-    }
-  }
-
-  // Update ease factor: EF' = EF + (0.1 - (3-q) * (0.08 + (3-q) * 0.02))
-  ease_factor = ease_factor + (0.1 - (3 - quality) * (0.08 + (3 - quality) * 0.02));
-  if (ease_factor < 1.3) ease_factor = 1.3;
-
-  // Calculate next review date
-  const nextReview = new Date();
-  if (interval_days === 0) {
-    nextReview.setMinutes(nextReview.getMinutes() + 10);
-  } else {
-    nextReview.setDate(nextReview.getDate() + interval_days);
-  }
+  const nextSRS = calculateNextSRS(word, quality);
 
   await pool.query(
     `UPDATE vocabulary 
      SET repetitions = $1, interval_days = $2, ease_factor = $3, next_review = $4 
      WHERE id = $5`,
-    [repetitions, interval_days, ease_factor, nextReview, wordId]
+    [nextSRS.repetitions, nextSRS.interval_days, nextSRS.ease_factor, nextSRS.next_review, wordId]
   );
 
   // Recalculate vocab skill level in background
@@ -383,7 +428,7 @@ async function reviewWord(wordId, quality) {
     console.error('Error syncing vocab skill level:', syncErr.message);
   }
 
-  return { repetitions, interval_days, ease_factor, next_review: nextReview };
+  return nextSRS;
 }
 
 async function getVocabularyLevelsSummary() {
@@ -550,6 +595,8 @@ module.exports = {
   markWordLearned,
   getLessonsSummary,
   reviewWord,
+  calculateNextSRS,
+  getNextReviewTime,
   getVocabularyLevelsSummary,
   calculateVocabLevel,
   getDrillSections,

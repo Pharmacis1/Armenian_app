@@ -33,6 +33,7 @@ const actions = [
 
 let vocabulary = [];
 let reviewDueWords = [];
+let reviewNextDue = null;
 let activeDeck = [];
 let currentIndex = 0;
 let currentAudio = null;
@@ -128,6 +129,7 @@ async function loadVocabulary() {
     const dataLessons = await resLessons.json();
     vocabulary = dataAll.words || [];
     reviewDueWords = dataRev.words || [];
+    reviewNextDue = dataRev.nextDue || null;
     learnLessons = dataLessons.lessons || [];
 
     const totalUnlearned = learnLessons.reduce((acc, l) => acc + parseInt(l.unlearned_words || 0, 10), 0);
@@ -163,9 +165,11 @@ function updateReviewBadge() {
     if (reviewDueWords.length > 0) {
       badge.textContent = `${reviewDueWords.length} due`;
       badge.style.display = 'inline-block';
+      badge.style.background = '#e85d3a';
     } else {
-      badge.textContent = 'All done';
+      badge.textContent = '✓ 0 due';
       badge.style.display = 'inline-block';
+      badge.style.background = '#10b981';
     }
   }
 }
@@ -181,17 +185,38 @@ function openWordModal(mode = 'review', startIndex = 0) {
   const learnedPool = vocabulary.filter(w => w.is_learned !== false);
 
   if (mode === 'review') {
-    activeDeck = reviewDueWords.length > 0 ? reviewDueWords : (learnedPool.length > 0 ? learnedPool : vocabulary);
+    if (reviewDueWords.length === 0) {
+      let nextMsg = '🎉 Все карточки на сегодня повторены!';
+      if (reviewNextDue) {
+        const d = new Date(reviewNextDue);
+        const diffMs = d - new Date();
+        const diffMin = Math.max(1, Math.round(diffMs / 60000));
+        if (diffMin < 60) {
+          nextMsg += `\nБлижайшее повторение через ~${diffMin} мин.`;
+        } else if (diffMin < 1440) {
+          const diffHrs = Math.round(diffMin / 60);
+          nextMsg += `\nБлижайшее повторение через ~${diffHrs} ч.`;
+        } else {
+          const diffDays = Math.round(diffMin / 1440);
+          nextMsg += `\nБлижайшее повторение через ~${diffDays} д.`;
+        }
+      }
+      const doEarly = confirm(`${nextMsg}\n\nХотите повторить выученные слова досрочно для закрепления?`);
+      if (!doEarly) return;
+      activeDeck = learnedPool.length > 0 ? [...learnedPool] : [...vocabulary];
+    } else {
+      activeDeck = [...reviewDueWords];
+    }
     isListeningMode = false;
   } else if (mode === 'listen') {
-    activeDeck = learnedPool.length > 0 ? learnedPool : vocabulary;
+    activeDeck = learnedPool.length > 0 ? [...learnedPool] : [...vocabulary];
     isListeningMode = true;
   } else {
-    activeDeck = learnedPool.length > 0 ? learnedPool : vocabulary;
+    activeDeck = learnedPool.length > 0 ? [...learnedPool] : [...vocabulary];
     isListeningMode = false;
   }
 
-  currentIndex = Math.min(startIndex, activeDeck.length - 1);
+  currentIndex = Math.min(startIndex, Math.max(0, activeDeck.length - 1));
   updateModeToggleUI();
   unflipCard(false);
   renderModalCard();
@@ -305,9 +330,68 @@ function renderModalCard() {
     exBox.style.display = 'none';
   }
 
+  // Dynamic SRS button intervals based on this card's SM-2 state
+  const srsPreview = getSRSPreviewIntervals(word);
+  const againInterval = document.querySelector('.srs-again .srs-interval');
+  const hardInterval = document.querySelector('.srs-hard .srs-interval');
+  const goodInterval = document.querySelector('.srs-good .srs-interval');
+  const easyInterval = document.querySelector('.srs-easy .srs-interval');
+  if (againInterval) againInterval.textContent = srsPreview.again;
+  if (hardInterval) hardInterval.textContent = srsPreview.hard;
+  if (goodInterval) goodInterval.textContent = srsPreview.good;
+  if (easyInterval) easyInterval.textContent = srsPreview.easy;
+
   // Nav buttons
   document.getElementById('prevCardBtn').style.opacity = currentIndex === 0 ? '0.4' : '1';
   document.getElementById('nextCardBtn').textContent = currentIndex === activeDeck.length - 1 ? 'Завершить' : 'Далее →';
+}
+
+function getSRSPreviewIntervals(word) {
+  if (!word) return { again: '<10м', hard: '1д', good: '6д', easy: '20д' };
+
+  const reps = parseInt(word.repetitions || 0, 10);
+  const interval = parseInt(word.interval_days || 0, 10);
+  const ef = parseFloat(word.ease_factor || 2.5);
+
+  function fmtDays(days) {
+    if (days === 0) return '<10м';
+    if (days === 1) return '1д';
+    if (days >= 365) return `${(days / 365).toFixed(1).replace('.0', '')}г`;
+    if (days >= 30) return `${Math.round(days / 30)}мес`;
+    return `${days}д`;
+  }
+
+  // 0: Again — lapse
+  const again = '<10м';
+
+  // 1: Hard — modest advance (x1.2)
+  let hardDays = 1;
+  if (interval <= 1) {
+    hardDays = 1;
+  } else {
+    hardDays = Math.max(interval + 1, Math.round(interval * 1.2));
+  }
+  const hard = fmtDays(hardDays);
+
+  // 2: Good — standard SM-2 expansion (x EF)
+  let goodDays = 1;
+  if (reps <= 1) {
+    goodDays = 6;
+  } else {
+    goodDays = Math.max(interval + 1, Math.round(interval * ef));
+  }
+  const good = fmtDays(goodDays);
+
+  // 3: Easy — bonus expansion (x EF * 1.3)
+  let easyDays = 4;
+  if (reps <= 1) {
+    easyDays = Math.round(6 * ef * 1.3);
+  } else {
+    easyDays = Math.max(interval + 2, Math.round(interval * ef * 1.3));
+  }
+  const easy = fmtDays(easyDays);
+
+  return { again, hard, good, easy };
 }
 
 function revealWordOnFront() {
@@ -323,20 +407,37 @@ async function submitRating(quality) {
 
   if (navigator.vibrate) navigator.vibrate(15);
 
-  const qualityLabels = ['Снова (10м)', 'Трудно (1д)', 'Хорошо (3д)', 'Легко (7д)'];
-  showToast(`Оценка: ${qualityLabels[quality]}`);
+  const preview = getSRSPreviewIntervals(word);
+  const qualityMap = {
+    0: { label: 'Снова', interval: preview.again },
+    1: { label: 'Трудно', interval: preview.hard },
+    2: { label: 'Хорошо', interval: preview.good },
+    3: { label: 'Легко', interval: preview.easy },
+  };
+  const selected = qualityMap[quality] || { label: '', interval: '' };
+  showToast(`Оценка: ${selected.label} (${selected.interval})`);
 
   try {
-    await fetch(`/api/vocabulary/${word.id}/review`, {
+    const res = await fetch(`/api/vocabulary/${word.id}/review`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ quality }),
     });
-
-    // Vocab skill level automatically syncs in PostgreSQL when interval_days >= 21
-
+    const data = await res.json();
+    if (data && data.repetitions !== undefined) {
+      word.repetitions = data.repetitions;
+      word.interval_days = data.interval_days;
+      word.ease_factor = data.ease_factor;
+      word.next_review = data.next_review;
+    }
   } catch (e) {
     console.error('Error submitting review', e);
+  }
+
+  // If "Again" (quality === 0), re-queue card to end of activeDeck so user reinforces it in this session!
+  if (quality === 0) {
+    activeDeck.push({ ...word });
+    showToast('🔁 Слово повторится в конце сессии');
   }
 
   goToNextCard();

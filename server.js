@@ -194,7 +194,8 @@ app.get('/api/audio/:wordId', async (req, res) => {
 app.get('/api/vocabulary/review', async (req, res) => {
   try {
     const words = await db.getWordsForReview();
-    res.json({ words, count: words.length });
+    const nextDue = await db.getNextReviewTime();
+    res.json({ words, count: words.length, nextDue });
   } catch (err) {
     console.error('Error fetching review words:', err);
     res.status(500).json({ error: 'Internal server error' });
