@@ -169,6 +169,20 @@ app.post('/api/drills/tts', async (req, res) => {
   }
 });
 
+// API: Synthesize TTS audio for a reading paragraph or chunk
+app.post('/api/reading/tts', async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text) return res.status(400).json({ error: 'Missing text parameter' });
+    const tts = require('./services/tts');
+    const audioInfo = await tts.getOrGenerateSentenceAudio(text);
+    res.json({ ok: true, url: audioInfo.url, cached: audioInfo.cached });
+  } catch (err) {
+    console.error('Reading TTS error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // API: play/synthesize audio for a word
 app.get('/api/audio/:wordId', async (req, res) => {
   try {

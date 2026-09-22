@@ -620,6 +620,8 @@ function renderActions() {
         openDrillsModal();
       } else if (action.id === 'grammar') {
         openGrammarModal();
+      } else if (action.id === 'reading') {
+        openReadingModal();
       } else {
         showToast(`${action.title} — coming soon!`);
       }
@@ -3337,6 +3339,687 @@ function initGrammarModalEvents() {
   });
 }
 
+// ==========================================================================
+// === READING MODULE: CHUNKS & RHYTHM TRAINER (L1, L2, L3, L4)           ===
+// ==========================================================================
+
+const readingStories = [
+  {
+    id: 'leo_lost_box',
+    title: 'Խուզարկու Լեոն և կորած արկղիկը',
+    subtitle: 'Детектив Лео и пропавшая шкатулка',
+    level: 'A1',
+    paragraphs: [
+      {
+        id: 1,
+        chunks: [
+          { text: 'Այսօր', type: 'prep', phonetic: 'aysor', translation: 'Сегодня' },
+          { text: 'Նյու Հեյվեն քաղաքում', type: 'prep', phonetic: 'Nyu Heyven qaghaqum', translation: 'в городе Нью-Хейвен' },
+          { text: 'ցուրտ առավոտ է:', type: 'verb', phonetic: 'tsurt aravot e', translation: 'холодное утро.' },
+          { text: 'Անձրև է գալիս:', type: 'verb', phonetic: 'andzrev e galis', translation: 'Идёт дождь.' },
+          { text: 'Ջուրը', type: 'subj', phonetic: 'jure', translation: 'Вода' },
+          { text: 'թափվում է', type: 'verb', phonetic: 'tapvum e', translation: 'льётся' },
+          { text: 'փողոցներին:', type: 'prep', phonetic: 'poghotsnerin', translation: 'на улицы.' },
+          { text: 'Երկինքը', type: 'subj', phonetic: 'yerkinqe', translation: 'Небо' },
+          { text: 'մոխրագույն է:', type: 'verb', phonetic: 'mokhraguyn e', translation: 'серое.' }
+        ]
+      },
+      {
+        id: 2,
+        chunks: [
+          { text: 'Խուզարկու Լեոն', type: 'subj', phonetic: 'Khuzarku Leon', translation: 'Детектив Лео' },
+          { text: 'նստած է', type: 'verb', phonetic: 'nstats e', translation: 'сидит' },
+          { text: 'իր սենյակում՝', type: 'prep', phonetic: 'ir senyakum', translation: 'в своей комнате —' },
+          { text: 'սեղանի մոտ:', type: 'prep', phonetic: 'seghani mot', translation: 'у стола.' },
+          { text: 'Նա', type: 'subj', phonetic: 'na', translation: 'Он' },
+          { text: 'հագել է', type: 'verb', phonetic: 'hagel e', translation: 'надел' },
+          { text: 'տաք սվիտեր:', type: 'obj', phonetic: 'taq sviter', translation: 'тёплый свитер.' },
+          { text: 'Նա', type: 'subj', phonetic: 'na', translation: 'Он' },
+          { text: 'նստած է', type: 'verb', phonetic: 'nstats e', translation: 'сидит' },
+          { text: 'աթոռին', type: 'prep', phonetic: 'atorin', translation: 'на стуле' },
+          { text: 'և', type: 'conn', phonetic: 'yev', translation: 'и' },
+          { text: 'խմում է', type: 'verb', phonetic: 'khmum e', translation: 'пьёт' },
+          { text: 'տաք սև սուրճ', type: 'obj', phonetic: 'taq sev surch', translation: 'горячий чёрный кофе' },
+          { text: 'մի բաժակից:', type: 'prep', phonetic: 'mi bazhakits', translation: 'из чашки.' },
+          { text: 'Սուրճը', type: 'subj', phonetic: 'surche', translation: 'Кофе' },
+          { text: 'համեղ է:', type: 'verb', phonetic: 'hamegh e', translation: 'вкусный.' },
+          { text: 'Լեոյի ընկերը՝ Միան,', type: 'subj', phonetic: 'Leoyi enkere՝ Mian', translation: 'Подруга Лео — Миа,' },
+          { text: 'նստած է', type: 'verb', phonetic: 'nstats e', translation: 'сидит' },
+          { text: 'պատուհանի մոտ:', type: 'prep', phonetic: 'patuhani mot', translation: 'у окна.' },
+          { text: 'Միան', type: 'subj', phonetic: 'Mian', translation: 'Миа' },
+          { text: 'նայում է', type: 'verb', phonetic: 'nayum e', translation: 'смотрит' },
+          { text: 'առավոտյան լուրերը:', type: 'obj', phonetic: 'aravotyan lurere', translation: 'утренние новости.' },
+          { text: 'Սենյակում', type: 'prep', phonetic: 'senyakum', translation: 'В комнате' },
+          { text: 'լուռ է:', type: 'verb', phonetic: 'lurr e', translation: 'тихо.' }
+        ]
+      },
+      {
+        id: 3,
+        chunks: [
+          { text: 'Հանկարծ', type: 'prep', phonetic: 'Hankarts', translation: 'Внезапно' },
+          { text: 'դուռը', type: 'subj', phonetic: 'durre', translation: 'дверь' },
+          { text: 'բացվում է:', type: 'verb', phonetic: 'batsvum e', translation: 'открывается.' },
+          { text: 'Ներս է մտնում', type: 'verb', phonetic: 'Ners e mtnum', translation: 'Входит внутрь' },
+          { text: 'պապիկ Արթուրը:', type: 'subj', phonetic: 'papik Arture', translation: 'дедушка Артур.' },
+          { text: 'Նա', type: 'subj', phonetic: 'na', translation: 'Он' },
+          { text: 'հագել է', type: 'verb', phonetic: 'hagel e', translation: 'надел' },
+          { text: 'թաց վերարկու:', type: 'obj', phonetic: 'tats verarku', translation: 'мокрое пальто.' },
+          { text: 'Արթուրը', type: 'subj', phonetic: 'Arture', translation: 'У Артура' },
+          { text: 'ունի', type: 'verb', phonetic: 'uni', translation: 'есть' },
+          { text: 'հին խանութ՝', type: 'obj', phonetic: 'hin khanut', translation: 'старый магазин —' },
+          { text: 'ներքևում:', type: 'prep', phonetic: 'nerqevum', translation: 'внизу.' },
+          { text: 'Արթուրի ձեռքերը', type: 'subj', phonetic: 'Arturi dzerqere', translation: 'Руки Артура' },
+          { text: 'դողում են:', type: 'verb', phonetic: 'doghum yen', translation: 'дрожат.' }
+        ]
+      },
+      {
+        id: 4,
+        chunks: [
+          { text: '«Խուզարկու Լեո, Միա,', type: 'subj', phonetic: 'Khuzarku Leo, Mia', translation: '«Детектив Лео, Миа,' },
+          { text: 'խնդրում եմ,', type: 'verb', phonetic: 'khndrum yem', translation: 'пожалуйста,' },
+          { text: 'օգնեք ինձ»,—', type: 'verb', phonetic: 'ogneq indz', translation: 'помогите мне», —' },
+          { text: 'ասում է', type: 'verb', phonetic: 'asum e', translation: 'говорит' },
+          { text: 'պապիկ Արթուրը:', type: 'subj', phonetic: 'papik Arture', translation: 'дедушка Артур.' },
+          { text: '«Գիշերը', type: 'prep', phonetic: 'Gishere', translation: '«Ночью' },
+          { text: 'իմ խանութում', type: 'prep', phonetic: 'im khanutum', translation: 'в моём магазине' },
+          { text: 'վատ բան է եղել»:', type: 'verb', phonetic: 'vat ban e yeghel', translation: 'случилась беда».' }
+        ]
+      },
+      {
+        id: 5,
+        chunks: [
+          { text: 'Լեոն', type: 'subj', phonetic: 'Leon', translation: 'Лео' },
+          { text: 'դնում է', type: 'verb', phonetic: 'dnum e', translation: 'ставит' },
+          { text: 'բաժակը', type: 'obj', phonetic: 'bazhake', translation: 'чашку' },
+          { text: 'սեղանին:', type: 'prep', phonetic: 'seghanin', translation: 'на стол.' },
+          { text: 'Նա', type: 'subj', phonetic: 'na', translation: 'Он' },
+          { text: 'արագ', type: 'prep', phonetic: 'arag', translation: 'быстро' },
+          { text: 'բարձրանում է:', type: 'verb', phonetic: 'bardzranum e', translation: 'встаёт.' },
+          { text: '«Նստիր, Արթուր»,—', type: 'verb', phonetic: 'Nstir, Artur', translation: '«Садись, Артур», —' },
+          { text: 'սիրով', type: 'prep', phonetic: 'sirov', translation: 'с добротой' },
+          { text: 'ասում է', type: 'verb', phonetic: 'asum e', translation: 'говорит' },
+          { text: 'Լեոն:', type: 'subj', phonetic: 'Leon', translation: 'Лео.' },
+          { text: '«Խմիր', type: 'verb', phonetic: 'Khmir', translation: '«Выпей' },
+          { text: 'մի քիչ տաք ջուր', type: 'obj', phonetic: 'mi qich taq jur', translation: 'немного тёплой воды' },
+          { text: 'և', type: 'conn', phonetic: 'yev', translation: 'и' },
+          { text: 'պատմիր՝', type: 'verb', phonetic: 'patmir', translation: 'расскажи —' },
+          { text: 'ի՞նչ է եղել', type: 'verb', phonetic: 'inch e yeghel', translation: 'что случилось' },
+          { text: 'խանութում»:', type: 'prep', phonetic: 'khanutum', translation: 'в магазине».' }
+        ]
+      },
+      {
+        id: 6,
+        chunks: [
+          { text: 'Արթուրը', type: 'subj', phonetic: 'Arture', translation: 'Артур' },
+          { text: 'նստում է', type: 'verb', phonetic: 'nstum e', translation: 'садится' },
+          { text: 'աթոռին:', type: 'prep', phonetic: 'atorin', translation: 'на стул.' },
+          { text: 'Նա', type: 'subj', phonetic: 'na', translation: 'Он' },
+          { text: 'մի քիչ', type: 'prep', phonetic: 'mi qich', translation: 'немного' },
+          { text: 'լռում է,', type: 'verb', phonetic: 'lrum e', translation: 'молчит,' },
+          { text: 'ապա', type: 'conn', phonetic: 'apa', translation: 'затем' },
+          { text: 'սկսում է պատմել:', type: 'verb', phonetic: 'sksum e patmel', translation: 'начинает рассказывать.' },
+          { text: '«Գիշերը', type: 'prep', phonetic: 'Gishere', translation: '«Ночью' },
+          { text: 'եղանակը', type: 'subj', phonetic: 'yeghanake', translation: 'погода' },
+          { text: 'վատ էր:', type: 'verb', phonetic: 'vat er', translation: 'была плохой.' },
+          { text: 'Ինչ-որ մեկը', type: 'subj', phonetic: 'Inch-vor meke', translation: 'Кто-то' },
+          { text: 'կոտրել է', type: 'verb', phonetic: 'kotrel e', translation: 'разбил' },
+          { text: 'իմ խանութի պատուհանը:', type: 'obj', phonetic: 'im khanuti patuhane', translation: 'окно моего магазина.' },
+          { text: 'Այդ մարդը', type: 'subj', phonetic: 'Ayd marde', translation: 'Этот человек' },
+          { text: 'չի վերցրել', type: 'verb', phonetic: 'chi vercrel', translation: 'не взял' },
+          { text: 'իմ ոսկին', type: 'obj', phonetic: 'im voskin', translation: 'моё золото' },
+          { text: 'կամ', type: 'conn', phonetic: 'kam', translation: 'или' },
+          { text: 'իմ հին ժամացույցները:', type: 'obj', phonetic: 'im hin zhamatsuytsnere', translation: 'мои старинные часы.' },
+          { text: 'Նա', type: 'subj', phonetic: 'na', translation: 'Он' },
+          { text: 'վերցրել է', type: 'verb', phonetic: 'vercrel e', translation: 'взял' },
+          { text: 'միայն մեկ բան՝', type: 'obj', phonetic: 'miayn mek ban', translation: 'только одну вещь —' },
+          { text: 'հին երաժշտական արկղիկ:', type: 'obj', phonetic: 'hin yerazhshtakan arkghik', translation: 'старинную музыкальную шкатулку.' },
+          { text: 'Դա', type: 'subj', phonetic: 'da', translation: 'Это' },
+          { text: 'իմ տատիկից ու պապիկից մնացած', type: 'prep', phonetic: 'im tatikits u papikits mnatsats', translation: 'оставшаяся от дедушки и бабушки' },
+          { text: 'ընտանեկան իր է:', type: 'verb', phonetic: 'entanekan ir e', translation: 'семейная реликвия.' },
+          { text: 'Արկղիկի մեջ', type: 'prep', phonetic: 'Arkghiki mej', translation: 'В шкатулке' },
+          { text: 'կա', type: 'verb', phonetic: 'ka', translation: 'есть' },
+          { text: 'գաղտնի անցք', type: 'subj', phonetic: 'gaghni antsq', translation: 'секретное отверстие' },
+          { text: 'և', type: 'conn', phonetic: 'yev', translation: 'и' },
+          { text: 'թաքնված գրություն»:', type: 'subj', phonetic: 'taqnvats grutyun', translation: 'спрятанная записка».' }
+        ]
+      },
+      {
+        id: 7,
+        chunks: [
+          { text: 'Միան', type: 'subj', phonetic: 'Mian', translation: 'Миа' },
+          { text: 'բացում է', type: 'verb', phonetic: 'batsum e', translation: 'открывает' },
+          { text: 'իր նոութբուքը:', type: 'obj', phonetic: 'ir noutbuqe', translation: 'свой ноутбук.' },
+          { text: '«Ինչ-որ մեկին', type: 'obj', phonetic: 'Inch-vor mekin', translation: '«Кого-нибудь' },
+          { text: 'տեսա՞ր', type: 'verb', phonetic: 'tesar', translation: 'ты видел' },
+          { text: 'խանութի մոտ, Արթուր»,—', type: 'prep', phonetic: 'khanuti mot, Artur', translation: 'у магазина, Артур?» —' },
+          { text: 'հարցնում է', type: 'verb', phonetic: 'hartsnum e', translation: 'спрашивает' },
+          { text: 'Միան:', type: 'subj', phonetic: 'Mian', translation: 'Миа.' },
+          { text: 'Արթուրը', type: 'subj', phonetic: 'Arture', translation: 'Артур' },
+          { text: 'ասում է.', type: 'verb', phonetic: 'asum e', translation: 'говорит:' },
+          { text: '«Ոչ,', type: 'prep', phonetic: 'Voch', translation: '«Нет,' },
+          { text: 'փողոցը', type: 'subj', phonetic: 'poghotse', translation: 'улица' },
+          { text: 'մութ էր ու դատարկ:', type: 'verb', phonetic: 'mut er u datark', translation: 'была тёмной и пустой.' },
+          { text: 'Բայց', type: 'conn', phonetic: 'Bayts', translation: 'Но' },
+          { text: 'խանութի հատակը', type: 'subj', phonetic: 'khanuti hatake', translation: 'пол магазина' },
+          { text: 'թաց էր:', type: 'verb', phonetic: 'tats er', translation: 'был влажным.' },
+          { text: 'Ես', type: 'subj', phonetic: 'yes', translation: 'Я' },
+          { text: 'տեսա', type: 'verb', phonetic: 'tesa', translation: 'увидел' },
+          { text: 'մեծ ոտնահետք', type: 'obj', phonetic: 'mets otnahetq', translation: 'большой след ноги' },
+          { text: 'դռան մոտ:', type: 'prep', phonetic: 'dran mot', translation: 'у двери.' },
+          { text: 'Հատակին', type: 'prep', phonetic: 'Hatakin', translation: 'На полу' },
+          { text: 'կար նաև', type: 'verb', phonetic: 'kar nayev', translation: 'был также' },
+          { text: 'մի թուղթ»:', type: 'subj', phonetic: 'mi tught', translation: 'какой-то лист бумаги».' }
+        ]
+      },
+      {
+        id: 8,
+        chunks: [
+          { text: 'Հենց այդ պահին', type: 'prep', phonetic: 'Hents ayd pahin', translation: 'Прямо в этот момент' },
+          { text: 'աստիճանների վրա', type: 'prep', phonetic: 'astichanneri vra', translation: 'на лестнице' },
+          { text: 'արագ ոտնաձայներ են', type: 'subj', phonetic: 'arag otnadzayner yen', translation: 'быстрые шаги' },
+          { text: 'լսվում:', type: 'verb', phonetic: 'lsvum', translation: 'раздаются.' },
+          { text: 'Դեղին անձրևանոցով', type: 'prep', phonetic: 'Deghin andzrevanotsov', translation: 'С жёлтым зонтом' },
+          { text: 'սենյակ է վազում', type: 'verb', phonetic: 'senyak e vazum', translation: 'в комнату вбегает' },
+          { text: 'մի երեխա՝', type: 'subj', phonetic: 'mi yerekha', translation: 'ребёнок —' },
+          { text: 'Թոբի անունով:', type: 'prep', phonetic: 'Tobi anunov', translation: 'по имени Тоби.' },
+          { text: 'Նրա հետևից', type: 'prep', phonetic: 'Nra hetevits', translation: 'За ним' },
+          { text: 'ուրախ', type: 'prep', phonetic: 'urakh', translation: 'радостно' },
+          { text: 'հաչում է', type: 'verb', phonetic: 'hachum e', translation: 'лает' },
+          { text: 'շագանակագույն շունը՝', type: 'subj', phonetic: 'shaganakaguyn shune', translation: 'коричневая собака —' },
+          { text: 'Բարնաբին:', type: 'subj', phonetic: 'Barnabin', translation: 'Барнаби.' },
+          { text: 'Թոբին', type: 'subj', phonetic: 'Tobin', translation: 'Тоби' },
+          { text: 'ապրում է', type: 'verb', phonetic: 'aprum e', translation: 'живёт' },
+          { text: 'հացի խանութի մոտ:', type: 'prep', phonetic: 'hatsi khanuti mot', translation: 'возле булочной.' }
+        ]
+      },
+      {
+        id: 9,
+        chunks: [
+          { text: '«Լեո, պապիկ Արթուր»,—', type: 'subj', phonetic: 'Leo, papik Artur', translation: '«Лео, дедушка Артур», —' },
+          { text: 'ասում է', type: 'verb', phonetic: 'asum e', translation: 'говорит' },
+          { text: 'Թոբին:', type: 'subj', phonetic: 'Tobin', translation: 'Тоби.' },
+          { text: '«Առավոտյան', type: 'prep', phonetic: 'Aravotyan', translation: '«Утром' },
+          { text: 'ես ու Բարնաբին', type: 'subj', phonetic: 'yes u Barnabin', translation: 'я и Барнаби' },
+          { text: 'այգում էինք:', type: 'verb', phonetic: 'aygum eyinq', translation: 'были в парке.' },
+          { text: 'Բարնաբին', type: 'subj', phonetic: 'Barnabin', translation: 'Барнаби' },
+          { text: 'հին շատրվանի մոտ', type: 'prep', phonetic: 'hin shatrvani mot', translation: 'у старого фонтана' },
+          { text: 'մի փայլուն բանալի', type: 'obj', phonetic: 'mi paylun banali', translation: 'блестящий ключ' },
+          { text: 'գտավ»:', type: 'verb', phonetic: 'gtav', translation: 'нашёл».' }
+        ]
+      },
+      {
+        id: 10,
+        chunks: [
+          { text: 'Թոբին', type: 'subj', phonetic: 'Tobin', translation: 'Тоби' },
+          { text: 'ցույց է տալիս', type: 'verb', phonetic: 'tsuyts e talis', translation: 'показывает' },
+          { text: 'բանալին:', type: 'obj', phonetic: 'banalin', translation: 'ключ.' },
+          { text: 'Լեոն', type: 'subj', phonetic: 'Leon', translation: 'Лео' },
+          { text: 'վերցնում է', type: 'verb', phonetic: 'vertsnum e', translation: 'берёт' },
+          { text: 'բանալին', type: 'obj', phonetic: 'banalin', translation: 'ключ' },
+          { text: 'ու', type: 'conn', phonetic: 'u', translation: 'и' },
+          { text: 'նայում է նրան:', type: 'verb', phonetic: 'nayum e nran', translation: 'смотрит на него.' },
+          { text: 'Ապա', type: 'prep', phonetic: 'Apa', translation: 'Затем' },
+          { text: 'նա', type: 'subj', phonetic: 'na', translation: 'он' },
+          { text: 'նայում է', type: 'verb', phonetic: 'nayum e', translation: 'смотрит' },
+          { text: 'Միային:', type: 'prep', phonetic: 'Miayin', translation: 'на Миа.' },
+          { text: '«Կոտրված պատուհան,', type: 'subj', phonetic: 'Kotrvats patuhan', translation: '«Разбитое окно,' },
+          { text: 'կորած արկղիկ,', type: 'subj', phonetic: 'korats arkghik', translation: 'пропавшая шкатулка,' },
+          { text: 'ոտնահետք', type: 'subj', phonetic: 'otnahetq', translation: 'след ноги' },
+          { text: 'և', type: 'conn', phonetic: 'yev', translation: 'и' },
+          { text: 'երեխայի գտած բանալի»,—', type: 'subj', phonetic: 'yerekhayi gtats banali', translation: 'найденный ребёнком ключ», —' },
+          { text: 'ժպտում է', type: 'verb', phonetic: 'zhptum e', translation: 'улыбается' },
+          { text: 'Լեոն:', type: 'subj', phonetic: 'Leon', translation: 'Лео.' },
+          { text: '«Մենք', type: 'subj', phonetic: 'Menq', translation: '«У нас' },
+          { text: 'ունենք', type: 'verb', phonetic: 'unenq', translation: 'есть' },
+          { text: 'մեր առաջին գործը»:', type: 'obj', phonetic: 'mer arajin gortse', translation: 'наше первое дело».' }
+        ]
+      },
+      {
+        id: 11,
+        chunks: [
+          { text: 'Միան', type: 'subj', phonetic: 'Mian', translation: 'Миа' },
+          { text: 'բարձրանում է', type: 'verb', phonetic: 'bardzranum e', translation: 'поднимается' },
+          { text: 'և', type: 'conn', phonetic: 'yev', translation: 'и' },
+          { text: 'վերցնում է', type: 'verb', phonetic: 'vertsnum e', translation: 'берёт' },
+          { text: 'իր հեռախոսը:', type: 'obj', phonetic: 'ir herakhose', translation: 'свой телефон.' },
+          { text: '«Ես', type: 'subj', phonetic: 'Yes', translation: '«Я' },
+          { text: 'պատրաստ եմ»,—', type: 'verb', phonetic: 'patrast yem', translation: 'готова», —' },
+          { text: 'ասում է նա:', type: 'verb', phonetic: 'asum e na', translation: 'говорит она.' },
+          { text: 'Լեոն', type: 'subj', phonetic: 'Leon', translation: 'Лео' },
+          { text: 'ասում է.', type: 'verb', phonetic: 'asum e', translation: 'говорит:' },
+          { text: '«Բոլորդ', type: 'subj', phonetic: 'Bolord', translation: '«Все вы' },
+          { text: 'հագեք', type: 'verb', phonetic: 'hageq', translation: 'наденьте' },
+          { text: 'ձեր վերարկուները:', type: 'obj', phonetic: 'dzer verarkunere', translation: 'ваши пальто.' },
+          { text: 'Իջնում ենք ներքև՝', type: 'verb', phonetic: 'Izhnum yenq nerqev', translation: 'Спускаемся вниз —' },
+          { text: 'նայելու,', type: 'verb', phonetic: 'nayelu', translation: 'посмотреть,' },
+          { text: 'թե ինչ է եղել', type: 'verb', phonetic: 'te inch e yeghel', translation: 'что случилось' },
+          { text: 'խանութում»:', type: 'prep', phonetic: 'khanutum', translation: 'в магазине».' },
+          { text: 'Բոլորը՝', type: 'subj', phonetic: 'Bolore', translation: 'Все —' },
+          { text: 'Լեոն, Միան, Արթուրը,', type: 'subj', phonetic: 'Leon, Mian, Arture', translation: 'Лео, Миа, Артур,' },
+          { text: 'Թոբին ու Բարնաբին,', type: 'subj', phonetic: 'Tobin u Barnabin', translation: 'Тоби и Барнаби —' },
+          { text: 'դուրս են գալիս', type: 'verb', phonetic: 'durs yen galis', translation: 'выходят' },
+          { text: 'սենյակից', type: 'prep', phonetic: 'senyakits', translation: 'из комнаты' },
+          { text: 'ու', type: 'conn', phonetic: 'u', translation: 'и' },
+          { text: 'իջնում են ներքև:', type: 'verb', phonetic: 'izhnum yen nerqev', translation: 'спускаются вниз.' },
+          { text: 'Անձրևը', type: 'subj', phonetic: 'Andzreve', translation: 'Дождь' },
+          { text: 'դեռ գալիս է:', type: 'verb', phonetic: 'derr galis e', translation: 'всё ещё идёт.' },
+          { text: 'Բայց', type: 'conn', phonetic: 'Bayts', translation: 'Но' },
+          { text: 'հիմա', type: 'prep', phonetic: 'hima', translation: 'теперь' },
+          { text: 'բոլորը', type: 'subj', phonetic: 'bolore', translation: 'все' },
+          { text: 'միասին են,', type: 'verb', phonetic: 'miasin yen', translation: 'вместе,' },
+          { text: 'և', type: 'conn', phonetic: 'yev', translation: 'и' },
+          { text: 'գործը', type: 'subj', phonetic: 'gortse', translation: 'дело' },
+          { text: 'սկսվում է:', type: 'verb', phonetic: 'sksvum e', translation: 'начинается.' }
+        ]
+      }
+    ]
+  }
+];
+
+let currentReadingStory = readingStories[0];
+let currentReadingMode = 'l1'; // 'l1', 'l2', 'l3', 'l4'
+let isRhythmTrainerRunning = false;
+let rhythmTimer = null;
+let currentRhythmIndex = -1;
+let storyAllChunks = []; // array of { chunk, el, paragraphId }
+let currentReadingAudio = null;
+let currentPlayingBtn = null;
+let activeTappedChunkEl = null;
+
+function openReadingModal() {
+  const modal = document.getElementById('readingModal');
+  if (!modal) return;
+  modal.classList.add('active');
+  renderReadingCards();
+  setReadingMode(currentReadingMode);
+}
+
+function closeReadingModal() {
+  const modal = document.getElementById('readingModal');
+  if (modal) modal.classList.remove('active');
+  stopRhythmTrainer();
+  stopReadingAudio();
+  closeChunkSheet();
+}
+
+function setReadingMode(mode) {
+  currentReadingMode = mode;
+  const pills = document.querySelectorAll('#readingModePills .reading-mode-pill');
+  pills.forEach(p => {
+    p.classList.toggle('active', p.dataset.mode === mode);
+  });
+
+  const cardsList = document.getElementById('readingCardsList');
+  if (cardsList) {
+    cardsList.classList.remove('mode-l1', 'mode-l2', 'mode-l3', 'mode-l4');
+    cardsList.classList.add(`mode-${mode}`);
+  }
+}
+
+function renderReadingCards() {
+  const cardsList = document.getElementById('readingCardsList');
+  if (!cardsList) return;
+  cardsList.innerHTML = '';
+  cardsList.className = `reading-cards-list mode-${currentReadingMode}`;
+  storyAllChunks = [];
+
+  const story = currentReadingStory;
+  document.getElementById('readingStoryTitle').textContent = story.title;
+  document.getElementById('readingStorySubtitle').textContent = story.subtitle;
+
+  story.paragraphs.forEach(para => {
+    const card = document.createElement('div');
+    card.className = 'reading-card';
+    card.id = `readingCard_${para.id}`;
+
+    // Card Header: #N badge + Listen button
+    const header = document.createElement('div');
+    header.className = 'reading-card-header';
+    header.innerHTML = `
+      <span class="reading-card-num">#${para.id}</span>
+      <button class="reading-card-listen-btn" data-para-id="${para.id}">
+        <span class="listen-icon">🔊</span>
+        <span class="listen-text">Listen</span>
+      </button>
+    `;
+
+    const listenBtn = header.querySelector('.reading-card-listen-btn');
+    listenBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      playParagraphAudio(para, card, listenBtn);
+    });
+
+    // Chunks wrap
+    const chunksWrap = document.createElement('div');
+    chunksWrap.className = 'reading-chunks-wrap';
+
+    para.chunks.forEach((chunk, chunkIdx) => {
+      const chunkEl = document.createElement('span');
+      chunkEl.className = `reading-chunk chunk-${chunk.type}`;
+      chunkEl.textContent = chunk.text;
+      chunkEl.dataset.paraId = para.id;
+      chunkEl.dataset.chunkIdx = chunkIdx;
+
+      // Handle click/tap on chunk
+      chunkEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        handleChunkTap(chunk, chunkEl);
+      });
+
+      chunksWrap.appendChild(chunkEl);
+      storyAllChunks.push({
+        chunk,
+        el: chunkEl,
+        paragraphId: para.id
+      });
+    });
+
+    card.appendChild(header);
+    card.appendChild(chunksWrap);
+    cardsList.appendChild(card);
+  });
+}
+
+function handleChunkTap(chunk, chunkEl) {
+  if (navigator.vibrate) navigator.vibrate(10);
+
+  // If rhythm trainer is running, pause it so user can read
+  if (isRhythmTrainerRunning) {
+    pauseRhythmTrainer();
+  }
+
+  // Deselect previous tapped chunk
+  if (activeTappedChunkEl) {
+    activeTappedChunkEl.classList.remove('is-tapped-active');
+  }
+
+  activeTappedChunkEl = chunkEl;
+  chunkEl.classList.add('is-tapped-active');
+
+  openChunkSheet(chunk);
+}
+
+function openChunkSheet(chunk) {
+  const sheet = document.getElementById('chunkBottomSheet');
+  if (!sheet) return;
+
+  const typeBadge = document.getElementById('chunkSheetTypeBadge');
+  const armEl = document.getElementById('chunkSheetArmenian');
+  const phonEl = document.getElementById('chunkSheetPhonetic');
+  const transEl = document.getElementById('chunkSheetTranslation');
+  const audioBtn = document.getElementById('chunkSheetAudioBtn');
+
+  // Set type badge
+  typeBadge.className = `chunk-sheet-type-badge ${chunk.type}`;
+  const typeLabels = {
+    subj: 'Субъект (Кто? Что?)',
+    verb: 'Действие (Глагол)',
+    prep: 'Обстоятельство (Где? Куда? Когда?)',
+    obj: 'Объект (Кого? Что?)',
+    conn: 'Связка / Союз'
+  };
+  typeBadge.textContent = typeLabels[chunk.type] || 'Фраза';
+
+  armEl.textContent = chunk.text;
+  phonEl.textContent = chunk.phonetic ? `[${chunk.phonetic}]` : '';
+  transEl.textContent = chunk.translation || '';
+
+  // Setup single chunk audio playback
+  audioBtn.onclick = (e) => {
+    e.stopPropagation();
+    playChunkAudio(chunk.text);
+  };
+
+  sheet.classList.add('active');
+}
+
+function closeChunkSheet() {
+  const sheet = document.getElementById('chunkBottomSheet');
+  if (sheet) sheet.classList.remove('active');
+  if (activeTappedChunkEl) {
+    activeTappedChunkEl.classList.remove('is-tapped-active');
+    activeTappedChunkEl = null;
+  }
+}
+
+async function playChunkAudio(text) {
+  try {
+    const cleanText = text.replace(/[.,:;«»!?"'—]/g, '').trim();
+    if (!cleanText) return;
+    
+    if (currentReadingAudio) {
+      currentReadingAudio.pause();
+      currentReadingAudio = null;
+    }
+
+    const res = await fetch('/api/reading/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: cleanText })
+    });
+    const data = await res.json();
+    if (data.url) {
+      currentReadingAudio = new Audio(data.url);
+      currentReadingAudio.play();
+    }
+  } catch (err) {
+    console.error('Error playing chunk audio:', err);
+  }
+}
+
+// === Rhythm Trainer Engine ===
+
+function toggleRhythmTrainer() {
+  if (isRhythmTrainerRunning) {
+    stopRhythmTrainer();
+  } else {
+    startRhythmTrainer();
+  }
+}
+
+function startRhythmTrainer() {
+  if (storyAllChunks.length === 0) return;
+  stopReadingAudio();
+  closeChunkSheet();
+
+  isRhythmTrainerRunning = true;
+  const btn = document.getElementById('rhythmTrainerBtn');
+  if (btn) {
+    btn.classList.add('is-active-trainer');
+    btn.querySelector('#rhythmBtnIcon').textContent = '⏸';
+    btn.querySelector('#rhythmBtnText').textContent = 'Пауза';
+  }
+
+  if (currentRhythmIndex < 0 || currentRhythmIndex >= storyAllChunks.length - 1) {
+    currentRhythmIndex = 0;
+  }
+
+  runRhythmStep();
+}
+
+function pauseRhythmTrainer() {
+  isRhythmTrainerRunning = false;
+  if (rhythmTimer) {
+    clearTimeout(rhythmTimer);
+    rhythmTimer = null;
+  }
+  const btn = document.getElementById('rhythmTrainerBtn');
+  if (btn) {
+    btn.classList.remove('is-active-trainer');
+    btn.querySelector('#rhythmBtnIcon').textContent = '▶';
+    btn.querySelector('#rhythmBtnText').textContent = 'Ритм-тренер';
+  }
+}
+
+function stopRhythmTrainer() {
+  pauseRhythmTrainer();
+  currentRhythmIndex = -1;
+  clearAllChunkHighlights();
+}
+
+function clearAllChunkHighlights() {
+  storyAllChunks.forEach(item => {
+    item.el.classList.remove('is-rhythm-active');
+  });
+  document.querySelectorAll('.reading-card.is-active-card').forEach(c => {
+    c.classList.remove('is-active-card');
+  });
+}
+
+function runRhythmStep() {
+  if (!isRhythmTrainerRunning) return;
+  if (currentRhythmIndex >= storyAllChunks.length) {
+    stopRhythmTrainer();
+    return;
+  }
+
+  clearAllChunkHighlights();
+
+  const item = storyAllChunks[currentRhythmIndex];
+  item.el.classList.add('is-rhythm-active');
+
+  const card = document.getElementById(`readingCard_${item.paragraphId}`);
+  if (card) {
+    card.classList.add('is-active-card');
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // Calculate interval based on WPM
+  const speedSelect = document.getElementById('readingSpeedSelect');
+  const wpm = parseInt(speedSelect ? speedSelect.value : '100', 10) || 100;
+  const msPerWord = (60 / wpm) * 1000;
+  const wordsInChunk = item.chunk.text.trim().split(/\s+/).length;
+  const stepDuration = Math.max(480, Math.round(wordsInChunk * msPerWord));
+
+  currentRhythmIndex++;
+  rhythmTimer = setTimeout(runRhythmStep, stepDuration);
+}
+
+// === Paragraph Audio Playback ===
+
+async function playParagraphAudio(para, cardEl, listenBtn) {
+  // If this paragraph is already playing, toggle pause
+  if (currentReadingAudio && currentPlayingBtn === listenBtn) {
+    stopReadingAudio();
+    return;
+  }
+
+  stopRhythmTrainer();
+  stopReadingAudio();
+
+  const fullText = para.chunks.map(c => c.text).join(' ');
+  listenBtn.classList.add('is-playing');
+  listenBtn.querySelector('.listen-icon').textContent = '⏳';
+  listenBtn.querySelector('.listen-text').textContent = 'Загрузка...';
+  currentPlayingBtn = listenBtn;
+  cardEl.classList.add('is-active-card');
+
+  try {
+    const res = await fetch('/api/reading/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: fullText })
+    });
+    const data = await res.json();
+    if (!data.url) throw new Error('Audio generation failed');
+
+    currentReadingAudio = new Audio(data.url);
+    listenBtn.querySelector('.listen-icon').textContent = '⏸';
+    listenBtn.querySelector('.listen-text').textContent = 'Стоп';
+
+    const paraChunks = storyAllChunks.filter(c => c.paragraphId === para.id);
+    let chunkStepTimer = null;
+
+    currentReadingAudio.onloadedmetadata = () => {
+      const duration = currentReadingAudio.duration;
+      if (duration && paraChunks.length > 0) {
+        const totalWords = para.chunks.reduce((acc, c) => acc + c.text.trim().split(/\s+/).length, 0);
+        let currTime = 0;
+        let pIdx = 0;
+
+        const scheduleChunkStep = () => {
+          if (!currentReadingAudio || currentReadingAudio.paused || pIdx >= paraChunks.length) return;
+          paraChunks.forEach(c => c.el.classList.remove('is-rhythm-active'));
+          paraChunks[pIdx].el.classList.add('is-rhythm-active');
+
+          const chunkWords = paraChunks[pIdx].chunk.text.trim().split(/\s+/).length;
+          const fraction = chunkWords / totalWords;
+          const chunkDurationMs = Math.max(350, Math.round(fraction * duration * 1000));
+          pIdx++;
+          chunkStepTimer = setTimeout(scheduleChunkStep, chunkDurationMs);
+        };
+        scheduleChunkStep();
+      }
+    };
+
+    currentReadingAudio.onended = () => {
+      clearTimeout(chunkStepTimer);
+      stopReadingAudio();
+    };
+
+    currentReadingAudio.onerror = () => {
+      clearTimeout(chunkStepTimer);
+      stopReadingAudio();
+      showToast('Ошибка воспроизведения аудио');
+    };
+
+    currentReadingAudio.play();
+  } catch (err) {
+    console.error('Failed to play paragraph audio:', err);
+    stopReadingAudio();
+    showToast('Не удалось загрузить аудио рассказа');
+  }
+}
+
+function stopReadingAudio() {
+  if (currentReadingAudio) {
+    currentReadingAudio.pause();
+    currentReadingAudio = null;
+  }
+  if (currentPlayingBtn) {
+    currentPlayingBtn.classList.remove('is-playing');
+    currentPlayingBtn.querySelector('.listen-icon').textContent = '🔊';
+    currentPlayingBtn.querySelector('.listen-text').textContent = 'Listen';
+    currentPlayingBtn = null;
+  }
+  clearAllChunkHighlights();
+}
+
+function initReadingModalEvents() {
+  const closeBtn = document.getElementById('readingModalClose');
+  const modal = document.getElementById('readingModal');
+
+  if (closeBtn) closeBtn.addEventListener('click', closeReadingModal);
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeReadingModal();
+      // Click anywhere inside reading list closes bottom sheet if open
+      if (!e.target.closest('#chunkBottomSheet') && !e.target.closest('.reading-chunk')) {
+        closeChunkSheet();
+      }
+    });
+  }
+
+  // Mode Switcher Pills
+  const pills = document.querySelectorAll('#readingModePills .reading-mode-pill');
+  pills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      setReadingMode(pill.dataset.mode);
+    });
+  });
+
+  // Rhythm Trainer button
+  const rhythmBtn = document.getElementById('rhythmTrainerBtn');
+  if (rhythmBtn) rhythmBtn.addEventListener('click', toggleRhythmTrainer);
+
+  // Bottom Sheet Close
+  const sheetClose = document.getElementById('chunkSheetClose');
+  if (sheetClose) sheetClose.addEventListener('click', closeChunkSheet);
+
+  const sheetHandle = document.querySelector('.chunk-sheet-drag-handle');
+  if (sheetHandle) sheetHandle.addEventListener('click', closeChunkSheet);
+}
+
 // === Init ===
 localStorage.removeItem('theme');
 document.body.classList.remove('cyberpunk');
@@ -3346,6 +4029,7 @@ initFeedbackEvents();
 initVocabModalEvents();
 initDrillsEvents();
 initGrammarModalEvents();
+initReadingModalEvents();
 renderActions();
 loadProgress();
 loadVocabulary();

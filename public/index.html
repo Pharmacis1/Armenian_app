@@ -556,6 +556,73 @@
     </div>
   </div>
 
+  <!-- ==================== READING (CHUNKS & RHYTHM TRAINER) MODAL ==================== -->
+  <div class="modal-overlay" id="readingModal">
+    <div class="modal-container reading-modal-container">
+      <button class="modal-close" id="readingModalClose" aria-label="Закрыть">✕</button>
+      
+      <!-- Top Control Bar (matching reference screenshots) -->
+      <div class="reading-top-toolbar">
+        <!-- Visual Modes Switcher -->
+        <div class="reading-mode-pills" id="readingModePills">
+          <button class="reading-mode-pill active" data-mode="l1">L1: Яркий</button>
+          <button class="reading-mode-pill" data-mode="l2">L2: Мягкий</button>
+          <button class="reading-mode-pill" data-mode="l3">L3: Блоки</button>
+          <button class="reading-mode-pill" data-mode="l4">L4: Текст</button>
+        </div>
+
+        <!-- Rhythm Trainer & Speed Controls -->
+        <div class="reading-trainer-controls">
+          <button class="rhythm-trainer-btn" id="rhythmTrainerBtn">
+            <span class="rhythm-btn-icon" id="rhythmBtnIcon">▶</span>
+            <span class="rhythm-btn-text" id="rhythmBtnText">Ритм-тренер</span>
+          </button>
+          <div class="reading-speed-select-wrap">
+            <select class="reading-speed-select" id="readingSpeedSelect">
+              <option value="60">60 WPM</option>
+              <option value="80">80 WPM</option>
+              <option value="100" selected>100 WPM</option>
+              <option value="120">120 WPM</option>
+              <option value="150">150 WPM</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Story Info Header -->
+      <div class="reading-story-header">
+        <div class="reading-story-badge">Уровень A1 · Рассказ</div>
+        <h2 class="reading-story-title" id="readingStoryTitle">Խուզարկու Լեոն և կորած արկղիկը</h2>
+        <div class="reading-story-subtitle" id="readingStorySubtitle">Детектив Лео и пропавшая шкатулка</div>
+      </div>
+
+      <!-- Scrollable Paragraphs List -->
+      <div class="reading-cards-list" id="readingCardsList">
+        <!-- Generated dynamically via JS -->
+      </div>
+    </div>
+
+    <!-- Mobile Bottom Sheet / Card for tapped chunk -->
+    <div class="chunk-bottom-sheet" id="chunkBottomSheet">
+      <div class="chunk-sheet-drag-handle"></div>
+      <div class="chunk-sheet-body">
+        <div class="chunk-sheet-header">
+          <span class="chunk-sheet-type-badge" id="chunkSheetTypeBadge">Субъект</span>
+          <button class="chunk-sheet-audio-btn" id="chunkSheetAudioBtn" title="Озвучить">
+            <span class="chunk-audio-icon">🔊</span>
+            <span class="chunk-audio-text">Слушать</span>
+          </button>
+          <button class="chunk-sheet-close" id="chunkSheetClose" aria-label="Закрыть">✕</button>
+        </div>
+        <div class="chunk-sheet-main">
+          <div class="chunk-sheet-armenian" id="chunkSheetArmenian"></div>
+          <div class="chunk-sheet-phonetic" id="chunkSheetPhonetic"></div>
+          <div class="chunk-sheet-translation" id="chunkSheetTranslation"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== FEEDBACK / BUG REPORT MODAL ==================== -->
   <div class="modal-overlay" id="feedbackModal">
     <div class="modal-container feedback-container">
