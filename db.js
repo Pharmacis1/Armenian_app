@@ -108,7 +108,20 @@ async function initDb() {
         is_mastered BOOLEAN DEFAULT FALSE,
         last_practiced TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      CREATE TABLE IF NOT EXISTS reading_progress (
+        id SERIAL PRIMARY KEY,
+        words_read INT DEFAULT 0,
+        completed_stories JSONB DEFAULT '[]',
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
+
+    // Ensure reading_progress singleton row exists
+    const rProgCount = await pool.query('SELECT COUNT(*) FROM reading_progress');
+    if (parseInt(rProgCount.rows[0].count, 10) === 0) {
+      await pool.query("INSERT INTO reading_progress (id, words_read, completed_stories) VALUES (1, 0, '[]')");
+    }
 
     // 4. Seed initial skills if empty
     const skillsCount = await pool.query('SELECT COUNT(*) FROM skills');
@@ -180,7 +193,7 @@ function calculateVocabLevel(masteredCount) {
 // Data access methods
 async function getSkills() {
   if (isConnected) {
-    // Dynamically calculate and sync vocab level from vocabulary table
+    // 1. Dynamically calculate and sync vocab level from vocabulary table
     const vocabCountRes = await pool.query(`
       SELECT 
         COUNT(*) as total,
@@ -192,6 +205,21 @@ async function getSkills() {
     const calculatedLevel = calculateVocabLevel(mastered);
 
     await pool.query('UPDATE skills SET level = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [calculatedLevel, 'vocab']);
+
+    // 2. Dynamically calculate and sync reading level from reading_progress table
+    let wordsRead = 0;
+    let completedStories = [];
+    try {
+      const rProgRes = await pool.query('SELECT words_read, completed_stories FROM reading_progress WHERE id = 1');
+      if (rProgRes.rowCount > 0) {
+        wordsRead = parseInt(rProgRes.rows[0].words_read || 0, 10);
+        completedStories = rProgRes.rows[0].completed_stories || [];
+      }
+      const readingLevel = Math.min(30, Math.max(1, Math.floor(wordsRead / 1000) + 1));
+      await pool.query('UPDATE skills SET level = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [readingLevel, 'reading']);
+    } catch (e) {
+      console.error('Error syncing reading skill:', e.message);
+    }
 
     const res = await pool.query('SELECT id, name, level, icon, description as desc FROM skills ORDER BY id');
     const skillsObj = {};
@@ -206,6 +234,10 @@ async function getSkills() {
         skillsObj[row.id].mastered = mastered;
         skillsObj[row.id].total = total;
         skillsObj[row.id].thresholdDays = 21;
+      } else if (row.id === 'reading') {
+        skillsObj[row.id].wordsRead = wordsRead;
+        skillsObj[row.id].totalTarget = 30000;
+        skillsObj[row.id].completedStories = completedStories;
       }
     }
     return skillsObj;
@@ -231,6 +263,7 @@ async function updateSkillLevel(skillId, level) {
 async function resetProgress() {
   if (isConnected) {
     await pool.query('UPDATE skills SET level = 1, updated_at = CURRENT_TIMESTAMP');
+    await pool.query("UPDATE reading_progress SET words_read = 0, completed_stories = '[]', updated_at = CURRENT_TIMESTAMP WHERE id = 1");
     return true;
   }
   for (const k of Object.keys(memoryProgress.skills)) {
@@ -581,6 +614,54 @@ async function recordDrillResult(cardId, isCorrect) {
   return upsert.rows[0];
 }
 
+async function getReadingProgress() {
+  if (isConnected) {
+    const res = await pool.query('SELECT words_read, completed_stories FROM reading_progress WHERE id = 1');
+    if (res.rowCount > 0) {
+      const wordsRead = parseInt(res.rows[0].words_read || 0, 10);
+      const level = Math.min(30, Math.max(1, Math.floor(wordsRead / 1000) + 1));
+      return { wordsRead, completedStories: res.rows[0].completed_stories || [], level, totalTarget: 30000 };
+    }
+  }
+  return { wordsRead: 0, completedStories: [], level: 1, totalTarget: 30000 };
+}
+
+async function recordReadingStoryCompletion(storyId, wordsCount) {
+  if (isConnected) {
+    const prog = await getReadingProgress();
+    const completed = Array.isArray(prog.completedStories) ? [...prog.completedStories] : [];
+    const isFirstTime = !completed.includes(storyId);
+
+    let newWordsRead = prog.wordsRead;
+    if (isFirstTime) {
+      newWordsRead += wordsCount;
+      completed.push(storyId);
+    }
+
+    const newLevel = Math.min(30, Math.max(1, Math.floor(newWordsRead / 1000) + 1));
+
+    await pool.query(
+      'UPDATE reading_progress SET words_read = $1, completed_stories = $2, updated_at = CURRENT_TIMESTAMP WHERE id = 1',
+      [newWordsRead, JSON.stringify(completed)]
+    );
+    await pool.query(
+      'UPDATE skills SET level = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      [newLevel, 'reading']
+    );
+
+    return {
+      ok: true,
+      isFirstTime,
+      wordsCredited: isFirstTime ? wordsCount : 0,
+      wordsRead: newWordsRead,
+      level: newLevel,
+      completedStories: completed,
+      totalTarget: 30000
+    };
+  }
+  return { ok: false };
+}
+
 module.exports = {
   initDb,
   getSkills,
@@ -599,5 +680,7 @@ module.exports = {
   getDrillSections,
   getDrillCards,
   recordDrillResult,
+  getReadingProgress,
+  recordReadingStoryCompletion,
   isDbConnected: () => isConnected,
 };

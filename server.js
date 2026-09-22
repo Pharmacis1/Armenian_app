@@ -183,6 +183,32 @@ app.post('/api/reading/tts', async (req, res) => {
   }
 });
 
+// API: Get reading progress (words read, level, completed stories)
+app.get('/api/reading/progress', async (req, res) => {
+  try {
+    const progress = await db.getReadingProgress();
+    res.json(progress);
+  } catch (err) {
+    console.error('Error fetching reading progress:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// API: Complete reading chapter/story (credits exact word count to skill)
+app.post('/api/reading/complete-chapter', async (req, res) => {
+  try {
+    const { storyId, wordsCount } = req.body;
+    if (!storyId || typeof wordsCount !== 'number') {
+      return res.status(400).json({ error: 'Missing storyId or wordsCount' });
+    }
+    const result = await db.recordReadingStoryCompletion(storyId, wordsCount);
+    res.json(result);
+  } catch (err) {
+    console.error('Error recording story completion:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // API: play/synthesize audio for a word
 app.get('/api/audio/:wordId', async (req, res) => {
   try {

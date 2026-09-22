@@ -85,7 +85,10 @@ function renderSkills(skills) {
   grid.innerHTML = '';
 
   for (const [key, skill] of Object.entries(skills)) {
-    const pct = ((skill.level - 1) / 29 * 100).toFixed(0);
+    let pct = ((skill.level - 1) / 29 * 100).toFixed(0);
+    if (key === 'reading' && skill.totalTarget) {
+      pct = Math.min(100, Math.max(0, ((skill.wordsRead || 0) / skill.totalTarget * 100))).toFixed(1);
+    }
     
     const card = document.createElement('div');
     card.className = 'skill-card';
@@ -94,6 +97,9 @@ function renderSkills(skills) {
     let levelText = `Lv. ${skill.level} / 30`;
     if (key === 'vocab' && skill.total) {
       levelText = `Lv. ${skill.level} / 30 · ${skill.mastered || 0}/${skill.total} (≥21 дн.)`;
+    } else if (key === 'reading') {
+      const wordsRead = skill.wordsRead || 0;
+      levelText = `Lv. ${skill.level} / 30 · ${wordsRead} / 30 000 слов`;
     }
 
     card.innerHTML = `
@@ -109,6 +115,10 @@ function renderSkills(skills) {
       card.style.cursor = 'pointer';
       card.title = 'Нажмите, чтобы посмотреть все 30 уровней и слова';
       card.addEventListener('click', openVocabLevelsModal);
+    } else if (key === 'reading') {
+      card.style.cursor = 'pointer';
+      card.title = 'Нажмите, чтобы открыть Reading и рассказы';
+      card.addEventListener('click', openReadingModal);
     }
 
     grid.appendChild(card);
@@ -3345,10 +3355,125 @@ function initGrammarModalEvents() {
 
 const readingStories = [
   {
+    id: 'anna_morning',
+    title: 'Աննայի առավոտը',
+    subtitle: 'Утро Анны',
+    level: 'A1',
+    category: 'Бытовой рассказ',
+    wordsCount: 75,
+    paragraphs: [
+      {
+        id: 1,
+        chunks: [
+          { text: 'Այսօր', type: 'prep', phonetic: 'aysor', translation: 'Сегодня' },
+          { text: 'կիրակի է:', type: 'verb', phonetic: 'kiraki e', translation: 'воскресенье.' },
+          { text: 'Առավոտյան', type: 'prep', phonetic: 'aravotyan', translation: 'Утром' },
+          { text: 'արևը', type: 'subj', phonetic: 'areve', translation: 'солнце' },
+          { text: 'շողում է:', type: 'verb', phonetic: 'shoghum e', translation: 'светит.' },
+          { text: 'Երկինքը', type: 'subj', phonetic: 'yerkinqe', translation: 'Небо' },
+          { text: 'կապույտ է', type: 'verb', phonetic: 'kapuyt e', translation: 'синее' },
+          { text: 'ու', type: 'conn', phonetic: 'u', translation: 'и' },
+          { text: 'պարզ:', type: 'verb', phonetic: 'parz', translation: 'ясное.' }
+        ]
+      },
+      {
+        id: 2,
+        chunks: [
+          { text: 'Աննան', type: 'subj', phonetic: 'Annan', translation: 'Анна' },
+          { text: 'զարթնում է', type: 'verb', phonetic: 'zartnum e', translation: 'просыпается' },
+          { text: 'և', type: 'conn', phonetic: 'yev', translation: 'и' },
+          { text: 'ժպտում:', type: 'verb', phonetic: 'zhptum', translation: 'улыбается.' },
+          { text: 'Նա', type: 'subj', phonetic: 'na', translation: 'Она' },
+          { text: 'գնում է', type: 'verb', phonetic: 'gnum e', translation: 'идёт' },
+          { text: 'խոհանոց:', type: 'prep', phonetic: 'khohanots', translation: 'на кухню.' },
+          { text: 'Խոհանոցում', type: 'prep', phonetic: 'khohanotsum', translation: 'На кухне' },
+          { text: 'տաք է:', type: 'verb', phonetic: 'taq e', translation: 'тепло.' },
+          { text: 'Աննան', type: 'subj', phonetic: 'Annan', translation: 'Анна' },
+          { text: 'եփում է', type: 'verb', phonetic: 'yepum e', translation: 'варит' },
+          { text: 'համեղ սուրճ:', type: 'obj', phonetic: 'hamegh surch', translation: 'вкусный кофе.' },
+          { text: 'Սեղանին', type: 'prep', phonetic: 'seghanin', translation: 'На столе' },
+          { text: 'կա', type: 'verb', phonetic: 'ka', translation: 'есть' },
+          { text: 'թարմ հաց,', type: 'subj', phonetic: 'tarm hats', translation: 'свежий хлеб,' },
+          { text: 'պանիր', type: 'subj', phonetic: 'panir', translation: 'сыр' },
+          { text: 'և', type: 'conn', phonetic: 'yev', translation: 'и' },
+          { text: 'կարմիր խնձոր:', type: 'subj', phonetic: 'karmir khndzor', translation: 'красное яблоко.' }
+        ]
+      },
+      {
+        id: 3,
+        chunks: [
+          { text: 'Աննան', type: 'subj', phonetic: 'Annan', translation: 'Анна' },
+          { text: 'նստում է', type: 'verb', phonetic: 'nstum e', translation: 'садится' },
+          { text: 'աթոռին՝', type: 'prep', phonetic: 'atorin', translation: 'на стул —' },
+          { text: 'պատուհանի մոտ:', type: 'prep', phonetic: 'patuhani mot', translation: 'у окна.' },
+          { text: 'Նա', type: 'subj', phonetic: 'na', translation: 'Она' },
+          { text: 'դանդաղ', type: 'prep', phonetic: 'dandagh', translation: 'медленно' },
+          { text: 'խմում է', type: 'verb', phonetic: 'khmum e', translation: 'пьёт' },
+          { text: 'տաք սուրճը', type: 'obj', phonetic: 'taq surche', translation: 'горячий кофе' },
+          { text: 'և', type: 'conn', phonetic: 'yev', translation: 'и' },
+          { text: 'կարդում է', type: 'verb', phonetic: 'kardum e', translation: 'читает' },
+          { text: 'հետաքրքիր գիրք:', type: 'obj', phonetic: 'hetaqrqir girk', translation: 'интересную книгу.' }
+        ]
+      },
+      {
+        id: 4,
+        chunks: [
+          { text: 'Սենյակ է գալիս', type: 'verb', phonetic: 'senyak e galis', translation: 'В комнату приходит' },
+          { text: 'փոքրիկ կատուն:', type: 'subj', phonetic: 'poqrik katun', translation: 'маленький кот.' },
+          { text: 'Կատվի անունը', type: 'subj', phonetic: 'katvi anune', translation: 'Имя кота' },
+          { text: 'Միկի է:', type: 'verb', phonetic: 'Miki e', translation: 'Мики.' },
+          { text: 'Միկին', type: 'subj', phonetic: 'Mikin', translation: 'Мики' },
+          { text: 'ցատկում է', type: 'verb', phonetic: 'tsatkum e', translation: 'прыгает' },
+          { text: 'Աննայի գիրկը', type: 'prep', phonetic: 'Annayi girke', translation: 'к Анне на колени' },
+          { text: 'և', type: 'conn', phonetic: 'yev', translation: 'и' },
+          { text: 'քնում:', type: 'verb', phonetic: 'qnum', translation: 'засыпает.' },
+          { text: 'Աննան', type: 'subj', phonetic: 'Annan', translation: 'Анна' },
+          { text: 'ուրախ է:', type: 'verb', phonetic: 'urakh e', translation: 'рада.' },
+          { text: 'Լավ օր է', type: 'subj', phonetic: 'lav or e', translation: 'Хороший день' },
+          { text: 'սկսվում:', type: 'verb', phonetic: 'sksvum', translation: 'начинается.' }
+        ]
+      }
+    ],
+    quiz: [
+      {
+        id: 'q1',
+        question: 'Ո՞ւր է գնում Աննան առավոտյան:',
+        subtitle: 'Куда идёт Анна утром?',
+        options: [
+          { text: 'Խոհանոց (На кухню)', isCorrect: true },
+          { text: 'Խանութ (В магазин)', isCorrect: false },
+          { text: 'Այգի (В сад)', isCorrect: false }
+        ]
+      },
+      {
+        id: 'q2',
+        question: 'Ի՞նչ կա սեղանին:',
+        subtitle: 'Что есть на столе?',
+        options: [
+          { text: 'Թարմ հաց, պանիր և կարմիր խնձոր (Свежий хлеб, сыр и красное яблоко)', isCorrect: true },
+          { text: 'Միս և ձու (Мясо и яйцо)', isCorrect: false },
+          { text: 'Ոսկի և ժամացույց (Золото и часы)', isCorrect: false }
+        ]
+      },
+      {
+        id: 'q3',
+        question: 'Ի՞նչ է անում կատուն՝ Միկին:',
+        subtitle: 'Что делает кот Мики?',
+        options: [
+          { text: 'Ցատկում է Աննայի գիրկը և քնում (Прыгает на колени к Анне и спит)', isCorrect: true },
+          { text: 'Բարձր հաչում է (Громко лает)', isCorrect: false },
+          { text: 'Կոտրում է պատուհանը (Разбивает окно)', isCorrect: false }
+        ]
+      }
+    ]
+  },
+  {
     id: 'leo_lost_box',
     title: 'Խուզարկու Լեոն և կորած արկղիկը',
     subtitle: 'Детектив Лео и пропавшая шкатулка',
     level: 'A1',
+    category: 'Рассказ / Детектив',
+    wordsCount: 371,
     paragraphs: [
       {
         id: 1,
@@ -3612,11 +3737,53 @@ const readingStories = [
           { text: 'սկսվում է:', type: 'verb', phonetic: 'sksvum e', translation: 'начинается.' }
         ]
       }
+    ],
+    quiz: [
+      {
+        id: 'q1',
+        question: 'Ի՞նչ էր եղել պապիկ Արթուրի խանութում:',
+        subtitle: 'Что случилось в магазине дедушки Артура?',
+        options: [
+          { text: 'Ինչ-որ մեկը կոտրել էր պատուհանը և վերցրել արկղիկը (Кто-то разбил окно и взял шкатулку)', isCorrect: true },
+          { text: 'Գողացել էին ամբողջ ոսկին (Украли всё золото)', isCorrect: false },
+          { text: 'Խանութում հրդեհ էր եղել (В магазине был пожар)', isCorrect: false }
+        ]
+      },
+      {
+        id: 'q2',
+        question: 'Ի՞նչ էր գտել շունը՝ Բարնաբին, շատրվանի մոտ:',
+        subtitle: 'Что нашла собака Барнаби у фонтана?',
+        options: [
+          { text: 'Փայլուն բանալի (Блестящий ключ)', isCorrect: true },
+          { text: 'Հին գիրք (Старую книгу)', isCorrect: false },
+          { text: 'Ոսկե ժամացույց (Золотые часы)', isCorrect: false }
+        ]
+      },
+      {
+        id: 'q3',
+        question: 'Ի՞նչ էր մնացել խանութի թաց հատակին:',
+        subtitle: 'Что осталось на мокром полу магазина?',
+        options: [
+          { text: 'Մեծ ոտնահետք և թուղթ (Большой след ноги и бумага)', isCorrect: true },
+          { text: 'Դեղին անձրևանոց (Жёлтый зонт)', isCorrect: false },
+          { text: 'Կոտրված բաժակ (Разбитая чашка)', isCorrect: false }
+        ]
+      },
+      {
+        id: 'q4',
+        question: 'Ո՞վ է Թոբին:',
+        subtitle: 'Кто такой Тоби?',
+        options: [
+          { text: 'Երեխա, ով ապրում է հացի խանութի մոտ (Ребёнок, живущий возле булочной)', isCorrect: true },
+          { text: 'Խուզարկու Լեոյի օգնականը (Помощник детектива Лео)', isCorrect: false },
+          { text: 'Ոստիկան (Полицейский)', isCorrect: false }
+        ]
+      }
     ]
   }
 ];
 
-let currentReadingStory = readingStories[0];
+let currentReadingStory = readingStories[0]; // Anna morning story by default
 let currentReadingMode = 'l1'; // 'l1', 'l2', 'l3', 'l4'
 let isRhythmTrainerRunning = false;
 let rhythmTimer = null;
@@ -3625,11 +3792,23 @@ let storyAllChunks = []; // array of { chunk, el, paragraphId }
 let currentReadingAudio = null;
 let currentPlayingBtn = null;
 let activeTappedChunkEl = null;
+let completedReadingStories = [];
 
-function openReadingModal() {
+async function loadReadingProgress() {
+  try {
+    const res = await fetch('/api/reading/progress');
+    const data = await res.json();
+    completedReadingStories = data.completedStories || [];
+  } catch (e) {
+    console.error('Failed to load reading progress', e);
+  }
+}
+
+async function openReadingModal() {
   const modal = document.getElementById('readingModal');
   if (!modal) return;
   modal.classList.add('active');
+  await loadReadingProgress();
   renderReadingCards();
   setReadingMode(currentReadingMode);
 }
@@ -3656,6 +3835,23 @@ function setReadingMode(mode) {
   }
 }
 
+function switchStory(storyId) {
+  const found = readingStories.find(s => s.id === storyId);
+  if (!found) return;
+  stopRhythmTrainer();
+  stopReadingAudio();
+  closeChunkSheet();
+  currentReadingStory = found;
+
+  // Update story selector pills
+  const pills = document.querySelectorAll('#readingStorySelectorPills .reading-story-pill');
+  pills.forEach(p => {
+    p.classList.toggle('active', p.dataset.storyId === storyId);
+  });
+
+  renderReadingCards();
+}
+
 function renderReadingCards() {
   const cardsList = document.getElementById('readingCardsList');
   if (!cardsList) return;
@@ -3666,7 +3862,10 @@ function renderReadingCards() {
   const story = currentReadingStory;
   document.getElementById('readingStoryTitle').textContent = story.title;
   document.getElementById('readingStorySubtitle').textContent = story.subtitle;
+  const badgeEl = document.getElementById('readingStoryBadge');
+  if (badgeEl) badgeEl.textContent = `Уровень ${story.level} · ${story.category || 'Рассказ'}`;
 
+  // Render paragraphs
   story.paragraphs.forEach(para => {
     const card = document.createElement('div');
     card.className = 'reading-card';
@@ -3718,6 +3917,156 @@ function renderReadingCards() {
     card.appendChild(chunksWrap);
     cardsList.appendChild(card);
   });
+
+  // Render Comprehension Quiz Card at the end of the story
+  renderComprehensionQuiz(story, cardsList);
+}
+
+function renderComprehensionQuiz(story, container) {
+  if (!story.quiz || story.quiz.length === 0) return;
+
+  const isAlreadyCompleted = completedReadingStories.includes(story.id);
+
+  const quizCard = document.createElement('div');
+  quizCard.className = 'reading-quiz-card';
+  quizCard.id = `quizCard_${story.id}`;
+
+  const statusBadge = isAlreadyCompleted
+    ? `<span class="quiz-reward-badge" style="background:rgba(16,185,129,0.18); border-color:#10b981; color:#6ee7b7;">✓ Прочитано · +${story.wordsCount} слов зачтено</span>`
+    : `<span class="quiz-reward-badge">Зачёт: +${story.wordsCount} слов в Reading</span>`;
+
+  quizCard.innerHTML = `
+    <div class="quiz-header">
+      <div class="quiz-header-title">
+        <span>📝</span>
+        <span>Тест на понимание главы</span>
+      </div>
+      ${statusBadge}
+    </div>
+    <div class="quiz-questions-list" id="quizQuestionsList"></div>
+    <div class="quiz-actions-bar">
+      <button class="quiz-submit-btn" id="quizSubmitBtn">Проверить ответы и зачесть слова</button>
+      <div class="quiz-success-banner" id="quizSuccessBanner" style="display:none;">
+        <span>🎉</span>
+        <span id="quizSuccessMsg">Отлично! Все ответы верны!</span>
+      </div>
+    </div>
+  `;
+
+  const qList = quizCard.querySelector('#quizQuestionsList');
+  const userAnswers = {};
+
+  story.quiz.forEach((q, qIdx) => {
+    const qItem = document.createElement('div');
+    qItem.className = 'quiz-q-item';
+    qItem.innerHTML = `
+      <div class="quiz-q-title">${qIdx + 1}. ${q.question}</div>
+      <div class="quiz-q-subtitle">${q.subtitle || ''}</div>
+      <div class="quiz-options-list" id="qOpts_${q.id}"></div>
+    `;
+
+    const optsContainer = qItem.querySelector(`#qOpts_${q.id}`);
+    q.options.forEach((opt, optIdx) => {
+      const optBtn = document.createElement('button');
+      optBtn.className = 'quiz-option-btn';
+      optBtn.innerHTML = `
+        <span>${opt.text}</span>
+        <span class="quiz-opt-icon">○</span>
+      `;
+
+      optBtn.addEventListener('click', () => {
+        if (optBtn.classList.contains('locked')) return;
+        userAnswers[q.id] = optIdx;
+
+        // Visual selection
+        optsContainer.querySelectorAll('.quiz-option-btn').forEach(b => {
+          b.classList.remove('is-selected');
+          b.querySelector('.quiz-opt-icon').textContent = '○';
+        });
+        optBtn.classList.add('is-selected');
+        optBtn.querySelector('.quiz-opt-icon').textContent = '●';
+      });
+
+      optsContainer.appendChild(optBtn);
+    });
+
+    qList.appendChild(qItem);
+  });
+
+  const submitBtn = quizCard.querySelector('#quizSubmitBtn');
+  const successBanner = quizCard.querySelector('#quizSuccessBanner');
+  const successMsg = quizCard.querySelector('#quizSuccessMsg');
+
+  submitBtn.addEventListener('click', async () => {
+    let allAnswered = true;
+    let allCorrect = true;
+
+    story.quiz.forEach(q => {
+      const selectedIdx = userAnswers[q.id];
+      if (selectedIdx === undefined) {
+        allAnswered = false;
+        return;
+      }
+      const optsContainer = qList.querySelector(`#qOpts_${q.id}`);
+      const buttons = optsContainer.querySelectorAll('.quiz-option-btn');
+
+      buttons.forEach((btn, idx) => {
+        const isOptCorrect = q.options[idx].isCorrect;
+        if (idx === selectedIdx) {
+          if (isOptCorrect) {
+            btn.classList.add('is-correct');
+            btn.querySelector('.quiz-opt-icon').textContent = '✓';
+          } else {
+            btn.classList.add('is-wrong');
+            btn.querySelector('.quiz-opt-icon').textContent = '✕';
+            allCorrect = false;
+          }
+        } else if (isOptCorrect) {
+          btn.classList.add('is-correct');
+          btn.querySelector('.quiz-opt-icon').textContent = '✓';
+        }
+      });
+    });
+
+    if (!allAnswered) {
+      showToast('Пожалуйста, ответьте на все вопросы теста');
+      return;
+    }
+
+    if (!allCorrect) {
+      showToast('Есть ошибки. Попробуйте ещё раз!');
+      return;
+    }
+
+    // Submit completion to server
+    try {
+      submitBtn.disabled = true;
+      submitBtn.style.display = 'none';
+
+      const res = await fetch('/api/reading/complete-chapter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ storyId: story.id, wordsCount: story.wordsCount })
+      });
+      const data = await res.json();
+
+      if (!completedReadingStories.includes(story.id)) {
+        completedReadingStories.push(story.id);
+      }
+
+      successMsg.textContent = `🎉 Поздравляем! +${story.wordsCount} слов успешно зачтено в навык Reading!`;
+      successBanner.style.display = 'flex';
+      showToast(`+${story.wordsCount} слов зачтено в навык Reading!`);
+
+      // Reload global progress to update dashboard cards immediately
+      loadProgress();
+    } catch (err) {
+      console.error('Failed to complete chapter:', err);
+      showToast('Ошибка сохранения результатов');
+    }
+  });
+
+  container.appendChild(quizCard);
 }
 
 function handleChunkTap(chunk, chunkEl) {
@@ -4005,6 +4354,14 @@ function initReadingModalEvents() {
   pills.forEach(pill => {
     pill.addEventListener('click', () => {
       setReadingMode(pill.dataset.mode);
+    });
+  });
+
+  // Story Selector Pills
+  const storyPills = document.querySelectorAll('#readingStorySelectorPills .reading-story-pill');
+  storyPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      switchStory(pill.dataset.storyId);
     });
   });
 
