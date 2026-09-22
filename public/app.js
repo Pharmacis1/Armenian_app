@@ -47,6 +47,9 @@ async function loadProgress() {
   try {
     const res = await fetch('/api/progress');
     const data = await res.json();
+    if (data.skills && data.skills.reading && Array.isArray(data.skills.reading.completedStories)) {
+      completedReadingStories = data.skills.reading.completedStories;
+    }
     renderProgress(data);
     renderSkills(data.skills);
   } catch (e) {
@@ -3356,6 +3359,8 @@ function initGrammarModalEvents() {
 const readingStories = [
   {
     id: 'anna_morning',
+    num: 1,
+    shortTitle: '#1 Աննա',
     title: 'Աննայի առավոտը',
     subtitle: 'Утро Анны',
     level: 'A1',
@@ -3469,10 +3474,12 @@ const readingStories = [
   },
   {
     id: 'leo_lost_box',
+    num: 2,
+    shortTitle: '#2 Լեո',
     title: 'Խուզարկու Լեոն և կորած արկղիկը',
     subtitle: 'Детектив Лео и пропавшая шкатулка',
     level: 'A1',
-    category: 'Рассказ / Детектив',
+    category: 'Детектив',
     wordsCount: 371,
     paragraphs: [
       {
@@ -3835,6 +3842,161 @@ function setReadingMode(mode) {
   }
 }
 
+let currentCatalogFilter = 'all';
+
+function openReadingCatalogModal() {
+  const modal = document.getElementById('readingCatalogModal');
+  if (!modal) return;
+  modal.classList.add('active');
+  renderReadingCatalog(currentCatalogFilter);
+}
+
+function closeReadingCatalogModal() {
+  const modal = document.getElementById('readingCatalogModal');
+  if (modal) modal.classList.remove('active');
+}
+
+function renderReadingCatalog(filter = 'all') {
+  currentCatalogFilter = filter;
+  const container = document.getElementById('readingCatalogCardsList');
+  if (!container) return;
+  container.innerHTML = '';
+
+  // Update filter buttons
+  document.querySelectorAll('#catalogFiltersRow .catalog-filter-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.filter === filter);
+  });
+
+  // Calculate total words read from completed stories
+  const totalWords = completedReadingStories.reduce((sum, sId) => {
+    const s = readingStories.find(st => st.id === sId);
+    return sum + (s ? s.wordsCount : 0);
+  }, 0);
+
+  const statsEl = document.getElementById('readingCatalogStats');
+  if (statsEl) {
+    statsEl.textContent = `Прогресс: ${totalWords.toLocaleString()} / 30 000 слов · Прочитано ${completedReadingStories.length} из ${readingStories.length} глав`;
+  }
+
+  const filtered = readingStories.filter(s => {
+    if (filter === 'all') return true;
+    return s.category === filter;
+  });
+
+  filtered.forEach(story => {
+    const isCompleted = completedReadingStories.includes(story.id);
+    const isCurrent = currentReadingStory && currentReadingStory.id === story.id;
+
+    const card = document.createElement('div');
+    card.className = `catalog-story-card ${isCompleted ? 'is-completed' : 'is-pending'} ${isCurrent ? 'is-current' : ''}`;
+
+    const numBadge = isCompleted ? `✓ ${story.num || 1}` : `#${story.num || 1}`;
+    const statusPill = isCompleted
+      ? `<span class="catalog-card-status completed">✓ Пройдено · ${story.wordsCount} сл.</span>`
+      : `<span class="catalog-card-status pending">+${story.wordsCount} слов в Reading</span>`;
+
+    card.innerHTML = `
+      <div class="catalog-card-left">
+        <div class="catalog-card-num">${numBadge}</div>
+        <div class="catalog-card-details">
+          <div class="catalog-card-title-row">
+            <h3 class="catalog-card-armenian">${story.title}</h3>
+            ${statusPill}
+          </div>
+          <div class="catalog-card-translation">${story.subtitle}</div>
+          <div class="catalog-card-tags">
+            <span class="catalog-tag level">${story.level}</span>
+            <span class="catalog-tag category">${story.category || 'Рассказ'}</span>
+            <span class="catalog-tag words">${story.wordsCount} слов</span>
+          </div>
+        </div>
+      </div>
+      <button class="catalog-card-action-btn ${isCompleted ? 'completed' : 'pending'}">
+        ${isCurrent ? 'Открыто' : (isCompleted ? 'Читать ↺' : 'Читать ➔')}
+      </button>
+    `;
+
+    card.addEventListener('click', () => {
+      closeReadingCatalogModal();
+      switchStory(story.id);
+    });
+
+    container.appendChild(card);
+  });
+}
+
+function updateReadingHeaderAndFooter() {
+  const story = currentReadingStory;
+  if (!story) return;
+
+  const isCompleted = completedReadingStories.includes(story.id);
+
+  // 1. Toolbar button in sticky header
+  const toolbarTitle = document.getElementById('readingToolbarStoryTitle');
+  const toolbarBadge = document.getElementById('readingToolbarStoryBadge');
+  if (toolbarTitle) toolbarTitle.textContent = story.shortTitle || story.title;
+  if (toolbarBadge) {
+    if (isCompleted) {
+      toolbarBadge.textContent = '✓';
+      toolbarBadge.className = 'catalog-btn-badge completed';
+    } else {
+      toolbarBadge.textContent = `+${story.wordsCount} сл.`;
+      toolbarBadge.className = 'catalog-btn-badge pending';
+    }
+  }
+
+  // 2. Story Header inside scroll body
+  const titleEl = document.getElementById('readingStoryTitle');
+  const subtitleEl = document.getElementById('readingStorySubtitle');
+  const badgeEl = document.getElementById('readingStoryBadge');
+  const statusBadgeEl = document.getElementById('readingStoryStatusBadge');
+  const catalogBtnEl = document.getElementById('readingStoryCatalogBtn');
+
+  if (titleEl) titleEl.textContent = story.title;
+  if (subtitleEl) subtitleEl.textContent = story.subtitle;
+  if (badgeEl) badgeEl.textContent = `Уровень ${story.level} · ${story.category || 'Рассказ'}`;
+
+  if (statusBadgeEl) {
+    if (isCompleted) {
+      statusBadgeEl.textContent = `✓ Прочитано · +${story.wordsCount} сл. зачтено`;
+      statusBadgeEl.className = 'reading-story-status-badge completed';
+    } else {
+      statusBadgeEl.textContent = `📖 Новая глава · +${story.wordsCount} сл.`;
+      statusBadgeEl.className = 'reading-story-status-badge pending';
+    }
+  }
+
+  if (catalogBtnEl) {
+    const spanEl = catalogBtnEl.querySelector('span');
+    if (spanEl) spanEl.textContent = `📚 Все главы (${readingStories.length})`;
+  }
+
+  // 3. Next Chapter / Catalog Footer
+  const footerEl = document.getElementById('readingStoryFooter');
+  if (footerEl) {
+    footerEl.innerHTML = '';
+
+    const backToCatBtn = document.createElement('button');
+    backToCatBtn.className = 'reading-footer-catalog-btn';
+    backToCatBtn.innerHTML = `<span>📚</span><span>Каталог всех глав</span>`;
+    backToCatBtn.onclick = openReadingCatalogModal;
+    footerEl.appendChild(backToCatBtn);
+
+    const currentIdx = readingStories.findIndex(s => s.id === story.id);
+    if (currentIdx >= 0 && currentIdx < readingStories.length - 1) {
+      const nextStory = readingStories[currentIdx + 1];
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'reading-next-story-btn';
+      nextBtn.innerHTML = `
+        <span>Читать главу #${nextStory.num || (currentIdx + 2)}: ${nextStory.shortTitle || nextStory.title}</span>
+        <span>➔</span>
+      `;
+      nextBtn.onclick = () => switchStory(nextStory.id);
+      footerEl.appendChild(nextBtn);
+    }
+  }
+}
+
 function switchStory(storyId) {
   const found = readingStories.find(s => s.id === storyId);
   if (!found) return;
@@ -3843,21 +4005,12 @@ function switchStory(storyId) {
   closeChunkSheet();
   currentReadingStory = found;
 
-  // Update story selector pills
-  const pills = document.querySelectorAll('#readingStorySelectorPills .reading-story-pill');
-  pills.forEach(p => {
-    p.classList.toggle('active', p.dataset.storyId === storyId);
-  });
-
-  // Sync quick story dropdown in sticky header
-  const quickSelect = document.getElementById('readingQuickStorySelect');
-  if (quickSelect) quickSelect.value = storyId;
-
   // Scroll reading body to top
   const scrollBody = document.getElementById('readingScrollBody');
   if (scrollBody) scrollBody.scrollTop = 0;
 
   renderReadingCards();
+  updateReadingHeaderAndFooter();
 }
 
 function renderReadingCards() {
@@ -3868,10 +4021,7 @@ function renderReadingCards() {
   storyAllChunks = [];
 
   const story = currentReadingStory;
-  document.getElementById('readingStoryTitle').textContent = story.title;
-  document.getElementById('readingStorySubtitle').textContent = story.subtitle;
-  const badgeEl = document.getElementById('readingStoryBadge');
-  if (badgeEl) badgeEl.textContent = `Уровень ${story.level} · ${story.category || 'Рассказ'}`;
+  updateReadingHeaderAndFooter();
 
   // Render paragraphs
   story.paragraphs.forEach(para => {
@@ -3940,8 +4090,12 @@ function renderComprehensionQuiz(story, container) {
   quizCard.id = `quizCard_${story.id}`;
 
   const statusBadge = isAlreadyCompleted
-    ? `<span class="quiz-reward-badge" style="background:rgba(16,185,129,0.18); border-color:#10b981; color:#6ee7b7;">✓ Прочитано · +${story.wordsCount} слов зачтено</span>`
-    : `<span class="quiz-reward-badge">Зачёт: +${story.wordsCount} слов в Reading</span>`;
+    ? `<span class="quiz-reward-badge completed" style="background:rgba(16,185,129,0.18); border-color:#10b981; color:#6ee7b7;">✓ Глава сдана · Слов зачтено: ${story.wordsCount} (повторно не начисляются)</span>`
+    : `<span class="quiz-reward-badge pending">Зачёт: +${story.wordsCount} слов в Reading (только 1 раз)</span>`;
+
+  const submitBtnText = isAlreadyCompleted
+    ? 'Проверить ответы (закрепление)'
+    : 'Проверить ответы и зачесть слова';
 
   quizCard.innerHTML = `
     <div class="quiz-header">
@@ -3949,11 +4103,11 @@ function renderComprehensionQuiz(story, container) {
         <span>📝</span>
         <span>Тест на понимание главы</span>
       </div>
-      ${statusBadge}
+      <div id="quizRewardBadgeWrap">${statusBadge}</div>
     </div>
     <div class="quiz-questions-list" id="quizQuestionsList"></div>
     <div class="quiz-actions-bar">
-      <button class="quiz-submit-btn" id="quizSubmitBtn">Проверить ответы и зачесть слова</button>
+      <button class="quiz-submit-btn" id="quizSubmitBtn">${submitBtnText}</button>
       <div class="quiz-success-banner" id="quizSuccessBanner" style="display:none;">
         <span>🎉</span>
         <span id="quizSuccessMsg">Отлично! Все ответы верны!</span>
@@ -4046,10 +4200,9 @@ function renderComprehensionQuiz(story, container) {
       return;
     }
 
-    // Submit completion to server
+    // Submit completion to server (server credits words ONLY ONCE)
     try {
       submitBtn.disabled = true;
-      submitBtn.style.display = 'none';
 
       const res = await fetch('/api/reading/complete-chapter', {
         method: 'POST',
@@ -4058,15 +4211,28 @@ function renderComprehensionQuiz(story, container) {
       });
       const data = await res.json();
 
-      if (!completedReadingStories.includes(story.id)) {
-        completedReadingStories.push(story.id);
+      if (data.isFirstTime) {
+        if (!completedReadingStories.includes(story.id)) {
+          completedReadingStories.push(story.id);
+        }
+        successMsg.textContent = `🎉 Поздравляем! +${story.wordsCount} слов успешно зачтено в навык Reading!`;
+        showToast(`+${story.wordsCount} слов зачтено в навык Reading!`);
+      } else {
+        successMsg.textContent = `✓ Отлично! Тест пройден без ошибок. (Слова за эту главу уже были зачтены ранее).`;
+        showToast(`Тест сдан! (Слова за главу уже были зачтены ранее)`);
       }
 
-      successMsg.textContent = `🎉 Поздравляем! +${story.wordsCount} слов успешно зачтено в навык Reading!`;
       successBanner.style.display = 'flex';
-      showToast(`+${story.wordsCount} слов зачтено в навык Reading!`);
+      submitBtn.style.display = 'none';
 
-      // Reload global progress to update dashboard cards immediately
+      // Update badge to completed green
+      const badgeWrap = quizCard.querySelector('#quizRewardBadgeWrap');
+      if (badgeWrap) {
+        badgeWrap.innerHTML = `<span class="quiz-reward-badge completed" style="background:rgba(16,185,129,0.2); border-color:#10b981; color:#6ee7b7;">✓ Глава сдана · Слов зачтено: ${story.wordsCount}</span>`;
+      }
+
+      // Reload global progress and update headers/catalog
+      updateReadingHeaderAndFooter();
       loadProgress();
     } catch (err) {
       console.error('Failed to complete chapter:', err);
@@ -4365,21 +4531,31 @@ function initReadingModalEvents() {
     });
   });
 
-  // Story Selector Pills
-  const storyPills = document.querySelectorAll('#readingStorySelectorPills .reading-story-pill');
-  storyPills.forEach(pill => {
-    pill.addEventListener('click', () => {
-      switchStory(pill.dataset.storyId);
-    });
-  });
+  // Catalog Open Buttons (Toolbar + Story Header)
+  const toolbarCatBtn = document.getElementById('readingToolbarCatalogBtn');
+  if (toolbarCatBtn) toolbarCatBtn.addEventListener('click', openReadingCatalogModal);
 
-  // Quick Story Dropdown in Sticky Header
-  const quickStorySelect = document.getElementById('readingQuickStorySelect');
-  if (quickStorySelect) {
-    quickStorySelect.addEventListener('change', (e) => {
-      switchStory(e.target.value);
+  const storyCatBtn = document.getElementById('readingStoryCatalogBtn');
+  if (storyCatBtn) storyCatBtn.addEventListener('click', openReadingCatalogModal);
+
+  // Catalog Modal Close Buttons & Overlay
+  const catCloseBtn = document.getElementById('readingCatalogClose');
+  if (catCloseBtn) catCloseBtn.addEventListener('click', closeReadingCatalogModal);
+
+  const catModal = document.getElementById('readingCatalogModal');
+  if (catModal) {
+    catModal.addEventListener('click', (e) => {
+      if (e.target === catModal) closeReadingCatalogModal();
     });
   }
+
+  // Catalog Category Filters
+  const filterBtns = document.querySelectorAll('#catalogFiltersRow .catalog-filter-btn');
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      renderReadingCatalog(btn.dataset.filter);
+    });
+  });
 
   // Rhythm Trainer button
   const rhythmBtn = document.getElementById('rhythmTrainerBtn');

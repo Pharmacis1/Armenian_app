@@ -3506,33 +3506,60 @@ body {
   border-color: #60a5fa;
 }
 
-.reading-quick-story-wrap {
-  position: relative;
-}
-
-.reading-quick-story-select {
-  appearance: none;
-  background: rgba(37, 99, 235, 0.18);
+.reading-toolbar-catalog-btn {
+  background: rgba(37, 99, 235, 0.15);
   border: 1px solid rgba(59, 130, 246, 0.35);
   color: #93c5fd;
   font-size: 12px;
   font-weight: 600;
-  padding: 5px 24px 5px 9px;
+  padding: 5px 10px;
   border-radius: 8px;
   cursor: pointer;
-  outline: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='%2393c5fd'%3E%3Cpath d='M0 0l5 5 5-5z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  max-width: 170px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  max-width: 175px;
+  user-select: none;
+}
+
+.reading-toolbar-catalog-btn:hover {
+  background: rgba(37, 99, 235, 0.28);
+  border-color: #60a5fa;
+  color: #ffffff;
+}
+
+.catalog-btn-icon {
+  font-size: 13px;
+}
+
+.catalog-btn-text {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: all 0.2s ease;
 }
 
-.reading-quick-story-select:focus {
-  border-color: #60a5fa;
+.catalog-btn-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.catalog-btn-badge.completed {
+  background: rgba(16, 185, 129, 0.25);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.5);
+}
+
+.catalog-btn-badge.pending {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+.catalog-btn-arrow {
+  font-size: 10px;
+  color: #94a3b8;
 }
 
 /* Scrollable Container for Story Content (Header + Cards + Quiz) */
@@ -3558,6 +3585,13 @@ body {
   margin-bottom: 8px;
 }
 
+.reading-story-badge-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .reading-story-badge {
   display: inline-block;
   background: rgba(245, 158, 11, 0.15);
@@ -3565,26 +3599,42 @@ body {
   color: #fbbf24;
   font-size: 11px;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 3px 8px;
   border-radius: 6px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.reading-story-selector-pills {
-  display: flex;
+.reading-story-status-badge {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
-.reading-story-pill {
-  background: rgba(255, 255, 255, 0.05);
+.reading-story-status-badge.completed {
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #6ee7b7;
+}
+
+.reading-story-status-badge.pending {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+}
+
+.reading-story-catalog-btn {
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #94a3b8;
-  font-size: 11.5px;
+  color: #cbd5e1;
+  font-size: 12px;
   font-weight: 600;
-  padding: 4px 10px;
+  padding: 5px 11px;
   border-radius: 8px;
   cursor: pointer;
   display: flex;
@@ -3593,33 +3643,10 @@ body {
   transition: all 0.2s ease;
 }
 
-.reading-story-pill:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-}
-
-.reading-story-pill.active {
-  background: rgba(37, 99, 235, 0.25);
-  border-color: #3b82f6;
-  color: #60a5fa;
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
-}
-
-.story-pill-num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
+.reading-story-catalog-btn:hover {
   background: rgba(255, 255, 255, 0.12);
-  font-size: 10px;
-  font-weight: 800;
-}
-
-.reading-story-pill.active .story-pill-num {
-  background: #3b82f6;
   color: #fff;
+  border-color: #60a5fa;
 }
 
 .reading-story-title {
@@ -4064,15 +4091,25 @@ body {
     border-radius: 7px;
   }
 
-  .reading-quick-story-select {
-    padding: 4px 18px 4px 6px;
+  .reading-toolbar-catalog-btn {
+    padding: 4px 8px;
     font-size: 11px;
     border-radius: 7px;
     max-width: 135px;
+    gap: 4px;
+  }
+
+  .catalog-btn-icon {
+    font-size: 11px;
   }
 
   .reading-story-header {
     padding: 12px 14px 4px 14px;
+  }
+
+  .reading-story-catalog-btn {
+    padding: 4px 9px;
+    font-size: 11px;
   }
 
   .reading-story-title {
@@ -4085,7 +4122,7 @@ body {
   }
 
   .reading-cards-list {
-    padding: 6px 12px 110px 12px;
+    padding: 6px 12px 30px 12px;
     gap: 10px;
   }
 
@@ -4100,6 +4137,49 @@ body {
 
   .chunk-bottom-sheet {
     padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
+  }
+
+  #readingCatalogModal {
+    padding: 0 !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+  }
+
+  .reading-catalog-container {
+    width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    border: none !important;
+    margin: 0 !important;
+  }
+
+  .reading-catalog-header {
+    padding-top: max(14px, env(safe-area-inset-top, 14px));
+    padding-left: 14px;
+    padding-right: 44px;
+    padding-bottom: 10px;
+  }
+
+  #readingCatalogClose {
+    top: max(10px, env(safe-area-inset-top, 10px)) !important;
+    right: 12px !important;
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .reading-catalog-cards-list {
+    padding: 10px 12px 60px 12px;
+    gap: 10px;
+  }
+
+  .catalog-story-card {
+    padding: 12px 10px;
+  }
+
+  .catalog-card-action-btn {
+    padding: 6px 10px;
+    font-size: 11.5px;
   }
 }
 
@@ -4270,6 +4350,333 @@ body {
 
 .skill-card[data-skill="reading"] {
   cursor: pointer;
+}
+
+/* ==========================================================================
+   READING STORY FOOTER (NEXT STORY BUTTON & CATALOG SHORTCUT)
+   ========================================================================== */
+
+.reading-story-footer {
+  margin-top: 14px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.reading-footer-catalog-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.reading-footer-catalog-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.reading-next-story-btn {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border: 1px solid #3b82f6;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+}
+
+.reading-next-story-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+}
+
+/* ==========================================================================
+   CHAPTER CATALOG MODAL (SCALABLE STORY LIBRARY)
+   ========================================================================== */
+
+.reading-catalog-container {
+  max-width: 620px;
+  width: 95vw;
+  height: 84vh;
+  max-height: 84vh;
+  display: flex;
+  flex-direction: column;
+  background: #0d121f;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+}
+
+.reading-catalog-header {
+  padding: 20px 22px 14px 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(12px);
+  flex-shrink: 0;
+}
+
+.reading-catalog-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.reading-catalog-icon {
+  font-size: 26px;
+}
+
+.reading-catalog-title {
+  font-size: 19px;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0 0 3px 0;
+}
+
+.reading-catalog-stats {
+  font-size: 12.5px;
+  color: #94a3b8;
+}
+
+.catalog-filters-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.catalog-filter-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.catalog-filter-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.catalog-filter-btn.active {
+  background: #2563eb;
+  border-color: #3b82f6;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+}
+
+.reading-catalog-cards-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px 30px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Catalog Story Card */
+.catalog-story-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  gap: 12px;
+}
+
+.catalog-story-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Completed Chapter Card - Distinct Green Accent */
+.catalog-story-card.is-completed {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.09) 0%, #111a2c 100%);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.catalog-story-card.is-completed:hover {
+  border-color: rgba(16, 185, 129, 0.7);
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.18);
+}
+
+/* Uncompleted Chapter Card */
+.catalog-story-card.is-pending {
+  background: #111827;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.catalog-story-card.is-pending:hover {
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Active Open Chapter Card */
+.catalog-story-card.is-current {
+  box-shadow: 0 0 0 2px #3b82f6, 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.catalog-card-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.catalog-card-num {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.catalog-story-card.is-completed .catalog-card-num {
+  background: #10b981;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+.catalog-story-card.is-pending .catalog-card-num {
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.catalog-card-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.catalog-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+
+.catalog-card-armenian {
+  font-family: 'Noto Serif Armenian', serif;
+  font-size: 16.5px;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.catalog-card-status {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+.catalog-card-status.completed {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #6ee7b7;
+}
+
+.catalog-card-status.pending {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+}
+
+.catalog-card-translation {
+  font-size: 13px;
+  color: #94a3b8;
+  margin-bottom: 6px;
+}
+
+.catalog-card-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.catalog-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #94a3b8;
+}
+
+.catalog-tag.level {
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+  font-weight: 700;
+}
+
+.catalog-tag.category {
+  background: rgba(255, 255, 255, 0.06);
+  color: #cbd5e1;
+}
+
+.catalog-tag.words {
+  color: #cbd5e1;
+}
+
+.catalog-card-action-btn {
+  border: none;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 7px 14px;
+  border-radius: 9px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.catalog-card-action-btn.completed {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #a7f3d0;
+}
+
+.catalog-card-action-btn.pending {
+  background: #2563eb;
+  border: 1px solid #3b82f6;
+  color: #ffffff;
+}
+
+.catalog-story-card:hover .catalog-card-action-btn {
+  transform: scale(1.04);
 }
 
 

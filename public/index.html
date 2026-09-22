@@ -591,32 +591,29 @@
             </div>
           </div>
 
-          <!-- Quick Chapter Select in Sticky Header -->
-          <div class="reading-quick-story-wrap">
-            <select class="reading-quick-story-select" id="readingQuickStorySelect" aria-label="Выбрать рассказ">
-              <option value="anna_morning">#1 Աննա (75 сл.)</option>
-              <option value="leo_lost_box">#2 Լեո (371 сл.)</option>
-            </select>
-          </div>
+          <!-- Catalog Button in Sticky Header -->
+          <button class="reading-toolbar-catalog-btn" id="readingToolbarCatalogBtn" title="Открыть каталог рассказов">
+            <span class="catalog-btn-icon">📚</span>
+            <span class="catalog-btn-text" id="readingToolbarStoryTitle">#1 Աննա</span>
+            <span class="catalog-btn-badge" id="readingToolbarStoryBadge">✓</span>
+            <span class="catalog-btn-arrow">▾</span>
+          </button>
         </div>
       </div>
 
       <!-- Scrollable Reading Body (Story Title + Badges + Paragraphs) -->
       <div class="reading-scroll-body" id="readingScrollBody">
-        <!-- Story Info Header & Selector -->
+        <!-- Story Info Header -->
         <div class="reading-story-header">
           <div class="reading-story-top-row">
-            <div class="reading-story-badge" id="readingStoryBadge">Уровень A1 · Бытовой рассказ</div>
-            <div class="reading-story-selector-pills" id="readingStorySelectorPills">
-              <button class="reading-story-pill active" data-story-id="anna_morning">
-                <span class="story-pill-num">1</span>
-                <span>Աննայի առավոտը (75 сл.)</span>
-              </button>
-              <button class="reading-story-pill" data-story-id="leo_lost_box">
-                <span class="story-pill-num">2</span>
-                <span>Խուզարկու Լեոն (371 сл.)</span>
-              </button>
+            <div class="reading-story-badge-wrap">
+              <span class="reading-story-badge" id="readingStoryBadge">Уровень A1 · Бытовой рассказ</span>
+              <span class="reading-story-status-badge" id="readingStoryStatusBadge">✓ Прочитано</span>
             </div>
+            <button class="reading-story-catalog-btn" id="readingStoryCatalogBtn" title="Выбрать главу из каталога">
+              <span>📚 Все главы (2)</span>
+              <span>▾</span>
+            </button>
           </div>
           <h2 class="reading-story-title" id="readingStoryTitle">Աննայի առավոտը</h2>
           <div class="reading-story-subtitle" id="readingStorySubtitle">Утро Анны</div>
@@ -625,6 +622,11 @@
         <!-- Scrollable Paragraphs List -->
         <div class="reading-cards-list" id="readingCardsList">
           <!-- Generated dynamically via JS -->
+        </div>
+
+        <!-- Next Story Footer -->
+        <div class="reading-story-footer" id="readingStoryFooter">
+          <!-- Filled dynamically via JS -->
         </div>
       </div>
     </div>
@@ -646,6 +648,36 @@
           <div class="chunk-sheet-phonetic" id="chunkSheetPhonetic"></div>
           <div class="chunk-sheet-translation" id="chunkSheetTranslation"></div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== READING CHAPTERS CATALOG MODAL ==================== -->
+  <div class="modal-overlay" id="readingCatalogModal">
+    <div class="modal-container reading-catalog-container">
+      <button class="modal-close" id="readingCatalogClose" aria-label="Закрыть">✕</button>
+      
+      <div class="reading-catalog-header">
+        <div class="reading-catalog-title-row">
+          <span class="reading-catalog-icon">📚</span>
+          <div>
+            <h2 class="reading-catalog-title">Каталог рассказов</h2>
+            <div class="reading-catalog-stats" id="readingCatalogStats">
+              Прогресс: 0 / 30 000 слов · 0 из 2 глав
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="catalog-filters-row" id="catalogFiltersRow">
+          <button class="catalog-filter-btn active" data-filter="all">Все главы</button>
+          <button class="catalog-filter-btn" data-filter="Бытовой рассказ">Бытовые</button>
+          <button class="catalog-filter-btn" data-filter="Детектив">Детектив</button>
+        </div>
+      </div>
+
+      <div class="reading-catalog-cards-list" id="readingCatalogCardsList">
+        <!-- Generated dynamically via JS -->
       </div>
     </div>
   </div>
