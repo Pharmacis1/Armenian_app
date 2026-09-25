@@ -1792,7 +1792,12 @@ let drillOriginalCount = 0;
 let drillTotalAnswered = 0;
 let drillCombo = 0;
 let drillMaxCombo = 0;
-let drillTimerSeconds = 7;
+let savedDrillTimer = null;
+try {
+  savedDrillTimer = localStorage.getItem('drill_timer_seconds');
+} catch (e) {}
+let drillTimerSeconds = savedDrillTimer !== null ? parseInt(savedDrillTimer, 10) : 7;
+if (isNaN(drillTimerSeconds)) drillTimerSeconds = 7;
 let drillTimerInterval = null;
 let drillTimerEndTime = 0;
 let drillIsAnswered = false;
@@ -1801,6 +1806,18 @@ let currentDrillAudio = null;
 let drillMediaRecorder = null;
 let drillAudioChunks = [];
 let drillIsRecording = false;
+
+function syncDrillTimerPillsUI() {
+  const timerPills = document.querySelectorAll('#drillsTimerPills .drill-timer-pill');
+  timerPills.forEach(p => {
+    const sec = parseInt(p.dataset.seconds, 10);
+    if (sec === drillTimerSeconds) {
+      p.classList.add('active');
+    } else {
+      p.classList.remove('active');
+    }
+  });
+}
 
 function getDrillStorageKey(sectionId) {
   return `drill_saved_session_${sectionId}`;
@@ -1853,6 +1870,7 @@ function openDrillsModal() {
   if (!modal) return;
   document.body.style.overflow = 'hidden';
   window.scrollTo(0, 0);
+  syncDrillTimerPillsUI();
   modal.classList.add('active');
   showDrillView('sections');
   loadDrillSections();
@@ -2004,6 +2022,9 @@ function renderCurrentDrillCard() {
   if (pillEl) pillEl.textContent = `${drillTotalAnswered + 1} / ${drillOriginalCount}`;
   if (counterEl) counterEl.textContent = `КАРТОЧКА ${drillTotalAnswered + 1} / ${drillOriginalCount}`;
 
+  // Sync Timer pills
+  syncDrillTimerPillsUI();
+
   // Tag
   const tagEl = document.getElementById('drillQuestionTag');
   if (tagEl) tagEl.textContent = `? ${card.tag}`;
@@ -2072,10 +2093,12 @@ function renderCurrentDrillCard() {
 }
 
 function startDrillCountdown() {
+  stopDrillTimer();
   const bar = document.getElementById('drillTimerBar');
   if (!bar) return;
 
   if (drillTimerSeconds === 0) {
+    bar.style.transition = 'none';
     bar.style.width = '100%';
     bar.style.background = '#3b82f6';
     return;
@@ -2503,9 +2526,12 @@ function initDrillsEvents() {
   const timerPills = document.querySelectorAll('#drillsTimerPills .drill-timer-pill');
   timerPills.forEach(pill => {
     pill.addEventListener('click', () => {
-      timerPills.forEach(p => p.classList.remove('active'));
-      pill.classList.add('active');
       drillTimerSeconds = parseInt(pill.dataset.seconds, 10);
+      if (isNaN(drillTimerSeconds)) drillTimerSeconds = 7;
+      try {
+        localStorage.setItem('drill_timer_seconds', drillTimerSeconds);
+      } catch (e) {}
+      syncDrillTimerPillsUI();
       if (!drillIsAnswered) {
         startDrillCountdown();
       }
