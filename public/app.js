@@ -54,6 +54,16 @@ async function loadProgress() {
     renderSkills(data.skills);
   } catch (e) {
     console.error('Failed to load progress', e);
+    const grid = document.getElementById('skillsGrid');
+    if (grid && !grid.children.length) {
+      grid.innerHTML = `
+        <div style="text-align:center; padding:24px 16px; color:#9490a0; grid-column:1/-1;">
+          <div style="font-size:24px; margin-bottom:8px;">📡</div>
+          <div>Не удалось загрузить данные с сервера.</div>
+          <button onclick="loadProgress();loadVocabulary();" style="margin-top:12px; padding:10px 20px; border-radius:10px; background:#e85d3a; color:#fff; border:none; font-weight:600; cursor:pointer;">Повторить попытку</button>
+        </div>
+      `;
+    }
   }
 }
 
