@@ -40,11 +40,17 @@ from pystray import MenuItem as item, Menu
 ICON_PATH = os.path.join(APP_DIR, "icon.png")
 PORT = 3001
 LOCAL_URL = f"http://localhost:{PORT}"
+CLOUDFLARE_DOMAIN = "armenian.net-forge.ru"
+CLOUDFLARE_URL = f"https://{CLOUDFLARE_DOMAIN}"
+CLOUDFLARE_TOKEN = "eyJhIjoiYzNjZWU5MjU3NWM5Y2RhNDJlMWExMmVkYmU2NGIyNTYiLCJ0IjoiZTZmZmIxNWYtNDdjMi00OTBlLWIyNGYtMWJkYzQ3NmY1MDAwIiwicyI6Ill6TXlZV0U1TXpndE1UUTJNeTAwT0RBeUxUaGhOREV0WW1KaFpUZGhObU0xWkRWbCJ9"
 PERMANENT_NGROK_DOMAIN = "gametogenic-unboisterously-kasha.ngrok-free.dev"
 PERMANENT_NGROK_URL = f"https://{PERMANENT_NGROK_DOMAIN}"
 
 server_process = None
 server_lock = threading.Lock()
+
+cloudflared_process = None
+cloudflared_lock = threading.Lock()
 
 ngrok_process = None
 ngrok_lock = threading.Lock()
@@ -53,6 +59,76 @@ def is_port_in_use(port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.settimeout(0.5)
         return s.connect_ex(('127.0.0.1', port)) == 0
+
+def find_cloudflared_exe():
+    local_path = os.path.join(APP_DIR, "cloudflared.exe")
+    if os.path.exists(local_path):
+        return local_path
+    c = shutil.which("cloudflared")
+    if c and os.path.exists(c):
+        return c
+    return None
+
+def is_cloudflared_running():
+    global cloudflared_process
+    if cloudflared_process and cloudflared_process.poll() is None:
+        return True
+    try:
+        out = subprocess.check_output('tasklist /FI "IMAGENAME eq cloudflared.exe"', shell=True).decode('utf-8', errors='ignore')
+        return "cloudflared.exe" in out
+    except Exception:
+        return False
+
+def start_cloudflared():
+    global cloudflared_process
+    with cloudflared_lock:
+        if is_cloudflared_running():
+            log("cloudflared is already running.")
+            return True
+
+        exe = find_cloudflared_exe()
+        if not exe:
+            log("cloudflared.exe not found.")
+            return False
+
+        log("Starting cloudflared tunnel for armenian.net-forge.ru...")
+        try:
+            creation_flags = 0x08000000  # CREATE_NO_WINDOW
+            cloudflared_process = subprocess.Popen(
+                [exe, "tunnel", "run", "--token", CLOUDFLARE_TOKEN],
+                cwd=APP_DIR,
+                creationflags=creation_flags,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            for _ in range(12):
+                time.sleep(0.5)
+                if is_cloudflared_running():
+                    log("cloudflared tunnel online.")
+                    return True
+        except Exception as e:
+            log(f"Failed to start cloudflared: {e}")
+            return False
+    return is_cloudflared_running()
+
+def stop_cloudflared():
+    global cloudflared_process
+    with cloudflared_lock:
+        if cloudflared_process:
+            try:
+                cloudflared_process.terminate()
+                cloudflared_process.wait(timeout=2)
+            except Exception:
+                try:
+                    cloudflared_process.kill()
+                except Exception:
+                    pass
+            cloudflared_process = None
+        try:
+            subprocess.run('taskkill /F /IM cloudflared.exe', shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception:
+            pass
+        log("cloudflared stopped.")
 
 def find_ngrok_exe():
     candidates = [
@@ -207,11 +283,13 @@ def stop_ngrok():
 
 def start_all_servers():
     started_node = start_server()
-    started_ngrok = start_ngrok()
+    start_cloudflared()
+    start_ngrok()
     return started_node
 
 def stop_all_servers():
     stop_server()
+    stop_cloudflared()
     stop_ngrok()
 
 def restart_servers(icon=None, item=None):
@@ -219,13 +297,31 @@ def restart_servers(icon=None, item=None):
     time.sleep(1)
     if start_all_servers():
         if icon:
-            icon.notify("Серверы (Node + ngrok) успешно перезапущены!", "Армянский язык")
+            icon.notify("Серверы (Node + Cloudflare Tunnel) успешно перезапущены!", "Армянский язык")
     else:
         if icon:
             icon.notify("Ошибка при перезапуске серверов", "Армянский язык")
 
 def open_browser(icon=None, item=None):
     webbrowser.open(LOCAL_URL)
+
+def open_domain_link(icon=None, item=None):
+    webbrowser.open(CLOUDFLARE_URL)
+
+def copy_domain_link(icon=None, item=None):
+    url = CLOUDFLARE_URL
+    try:
+        creation_flags = 0x08000000  # CREATE_NO_WINDOW
+        subprocess.run(
+            ["powershell", "-NoProfile", "-Command", f"Set-Clipboard -Value '{url}'"],
+            creationflags=creation_flags,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        if icon:
+            icon.notify(f"Ссылка скопирована в буфер:\n{url}", "Армянский язык")
+    except Exception as e:
+        log(f"Failed to copy link: {e}")
 
 def open_mobile_link(icon=None, item=None):
     webbrowser.open(PERMANENT_NGROK_URL)
@@ -241,7 +337,7 @@ def copy_mobile_link(icon=None, item=None):
             stderr=subprocess.DEVNULL
         )
         if icon:
-            icon.notify(f"Постоянная ссылка скопирована в буфер:\n{url}", "Армянский язык")
+            icon.notify(f"Ссылка ngrok скопирована в буфер:\n{url}", "Армянский язык")
     except Exception as e:
         log(f"Failed to copy link: {e}")
 
@@ -257,14 +353,16 @@ def create_tray_icon():
     else:
         image = Image.new('RGBA', (64, 64), color=(30, 100, 200, 255))
 
-    def mobile_title(item):
-        status = "🟢" if is_ngrok_active_with_permanent_url() else "🟡"
-        return f"📱 Мобильный {status}: {PERMANENT_NGROK_DOMAIN}"
+    def domain_title(item):
+        status = "🟢" if is_cloudflared_running() else "🟡"
+        return f"✨ Домен {status}: {CLOUDFLARE_DOMAIN}"
 
     menu = Menu(
-        item("🌐 Открыть Armenian App (браузер)", open_browser, default=True),
-        item(mobile_title, open_mobile_link),
-        item("📋 Скопировать мобильную ссылку", copy_mobile_link),
+        item("🌐 Открыть armenian.net-forge.ru", open_domain_link, default=True),
+        item(domain_title, open_domain_link),
+        item("📋 Скопировать ссылку (armenian.net-forge.ru)", copy_domain_link),
+        Menu.SEPARATOR,
+        item("💻 Открыть локально (localhost:3001)", open_browser),
         item("🔄 Перезапустить серверы", restart_servers),
         Menu.SEPARATOR,
         item("❌ Закрыть приложение (Выход)", exit_app)
@@ -273,7 +371,7 @@ def create_tray_icon():
     icon = pystray.Icon(
         "armenian_app_tray",
         image,
-        f"Հայերեն — Армянский язык\n{PERMANENT_NGROK_DOMAIN}",
+        f"Հայերեն — Армянский язык\n{CLOUDFLARE_DOMAIN}",
         menu=menu
     )
     return icon
@@ -290,14 +388,14 @@ def main():
         log("Mutex bound to port 39182")
     except socket.error as e:
         log(f"Already running or mutex error: {e}. Opening browser and exiting.")
-        open_browser()
+        open_domain_link()
         sys.exit(0)
 
     try:
         log("Starting servers...")
         start_all_servers()
 
-        threading.Thread(target=lambda: (time.sleep(1.2), open_browser()), daemon=True).start()
+        threading.Thread(target=lambda: (time.sleep(1.2), open_domain_link()), daemon=True).start()
 
         log("Creating tray icon...")
         tray = create_tray_icon()
